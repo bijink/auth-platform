@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    container_name: auth_api
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    container_name: auth_prod_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_prod
+    volumes:
+      - prod_db_data:/var/lib/postgresql/data
+
+volumes:
+  prod_db_data:
