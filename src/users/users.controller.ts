@@ -10,20 +10,20 @@ import {
 } from '@nestjs/common'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
-import { UserService } from './user.service'
+import { UsersService } from './users.service'
 
-@Controller('user')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
-    return this.userService.createUser(createUserDto)
+    return this.usersService.createUser(createUserDto)
   }
 
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findUser(id)
+    return this.usersService.findUser(id)
   }
 
   @Patch(':id')
@@ -31,16 +31,16 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.updateUser(id, updateUserDto)
+    return this.usersService.updateUser(id, updateUserDto)
   }
 
   @Delete(':id')
   deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.softDeleteUser(id)
+    return this.usersService.softDeleteUser(id)
   }
 
   @Delete('hard-delete/:id')
   hardDeleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.hardDeleteUser(id)
+    return this.usersService.hardDeleteUser(id)
   }
 }

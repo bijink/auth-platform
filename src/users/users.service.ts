@@ -11,7 +11,7 @@ import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async createUser(createUserDto: CreateUserDto) {
@@ -52,6 +52,7 @@ export class UserService {
       return this.prisma.user.update({
         data: updateUserDto,
         where: { id },
+        omit: { password: true },
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -67,6 +68,7 @@ export class UserService {
       const deletedUser = await this.prisma.user.update({
         data: { deleted: true },
         where: { id },
+        omit: { password: true },
       })
       return {
         id: deletedUser.id,
@@ -86,7 +88,10 @@ export class UserService {
 
   async hardDeleteUser(id: number) {
     try {
-      const deletedUser = await this.prisma.user.delete({ where: { id } })
+      const deletedUser = await this.prisma.user.delete({
+        where: { id },
+        omit: { password: true },
+      })
       return {
         id: deletedUser.id,
         status: true,
