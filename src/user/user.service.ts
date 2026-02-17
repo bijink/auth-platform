@@ -1,10 +1,49 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
-import { User } from 'generated/prisma/client'
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common'
+import * as argon from 'argon2'
+import { Prisma, User } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
+import { CreateUserDto } from './dto/create-user.dto'
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
+
+  async createUser(createUserDto: CreateUserDto) {
+    try {
+      // generate the password hash
+      const hashedPassword = await argon.hash(createUserDto.password)
+      const { password: _password, ...user } = await this.prisma.user.create({
+        data: { ...createUserDto, password: hashedPassword },
+      })
+      return user
+    } catch (error) {
+      // 1. handle validation errors (unique/email constraint violation)
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // P2002 = unique constraint failed
+        if (error.code === 'P2002') {
+          throw new ConflictException('User with this email already exists')
+        }
+
+        // Fallback for other known request errors
+        throw new ConflictException('Invalid data provided')
+      }
+
+      // 2. Handle validation errors (wrong field types, missing required fields, etc.)
+      if (error instanceof Prisma.PrismaClientValidationError) {
+        // return error.message
+        throw new BadRequestException('Validation failed: ' + error.message)
+      }
+
+      // 3. Fallback for everything else (unknown errors, connection issues, etc.)
+      throw new InternalServerErrorException('Failed to create user')
+    }
+  }
 
   async findUser(id: number): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
