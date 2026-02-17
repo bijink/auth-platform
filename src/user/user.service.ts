@@ -9,6 +9,7 @@ import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateUserDto } from './dto/create-user.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
 
 @Injectable()
 export class UserService {
@@ -52,5 +53,13 @@ export class UserService {
     if (!foundUser) throw new NotFoundException('User not found')
     const { password: _password, ...user } = foundUser
     return user
+  }
+
+  async updateUser(id: number, updateUserDto: UpdateUserDto) {
+    const foundUser = await this.prisma.user.findUnique({
+      where: { id },
+    })
+    if (!foundUser) throw new NotFoundException('User not found')
+    return this.prisma.user.update({ data: updateUserDto, where: { id } })
   }
 }
