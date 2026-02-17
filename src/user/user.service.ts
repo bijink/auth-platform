@@ -62,16 +62,34 @@ export class UserService {
     }
   }
 
-  softDeleteUser(id: number) {
-    return id
+  async softDeleteUser(id: number) {
+    try {
+      const deletedUser = await this.prisma.user.update({
+        data: { deleted: true },
+        where: { id },
+      })
+      return {
+        id: deletedUser.id,
+        status: true,
+        deleted: deletedUser.deleted,
+        message: 'Soft deleted user',
+      }
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        console.log(error.code)
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found')
+        }
+      }
+    }
   }
 
   async hardDeleteUser(id: number) {
     try {
       const deletedUser = await this.prisma.user.delete({ where: { id } })
       return {
-        status: true,
         id: deletedUser.id,
+        status: true,
         message: 'User premanently deleted',
       }
     } catch (error) {
