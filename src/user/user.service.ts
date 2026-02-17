@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import * as argon from 'argon2'
-import { Prisma, User } from 'generated/prisma/client'
+import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateUserDto } from './dto/create-user.dto'
 
@@ -45,11 +45,12 @@ export class UserService {
     }
   }
 
-  async findUser(id: number): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
+  async findUser(id: number) {
+    const foundUser = await this.prisma.user.findUnique({
       where: { id },
     })
-    if (!user) throw new NotFoundException('User not found')
+    if (!foundUser) throw new NotFoundException('User not found')
+    const { password: _password, ...user } = foundUser
     return user
   }
 }
