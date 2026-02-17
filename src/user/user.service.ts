@@ -18,10 +18,11 @@ export class UserService {
     try {
       // generate the password hash
       const hashedPassword = await argon.hash(createUserDto.password)
-      const { password: _password, ...user } = await this.prisma.user.create({
+      const createdUser = await this.prisma.user.create({
         data: { ...createUserDto, password: hashedPassword },
+        omit: { password: true },
       })
-      return user
+      return createdUser
     } catch (error) {
       // 1. handle validation errors (unique/email constraint violation)
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -40,18 +41,25 @@ export class UserService {
   async findUser(id: number) {
     const foundUser = await this.prisma.user.findUnique({
       where: { id },
+      omit: { password: true },
     })
     if (!foundUser) throw new NotFoundException('User not found')
-    const { password: _password, ...user } = foundUser
-    return user
+    return foundUser
   }
 
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
-    const foundUser = await this.prisma.user.findUnique({
-      where: { id },
-    })
-    if (!foundUser) throw new NotFoundException('User not found')
-    return this.prisma.user.update({ data: updateUserDto, where: { id } })
+    try {
+      return this.prisma.user.update({
+        data: updateUserDto,
+        where: { id },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found')
+        }
+      }
+    }
   }
 
   softDeleteUser(id: number) {
