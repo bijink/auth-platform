@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -30,18 +29,10 @@ export class UserService {
         if (error.code === 'P2002') {
           throw new ConflictException('User with this email already exists')
         }
-
         // Fallback for other known request errors
         throw new ConflictException('Invalid data provided')
       }
-
-      // 2. Handle validation errors (wrong field types, missing required fields, etc.)
-      if (error instanceof Prisma.PrismaClientValidationError) {
-        // return error.message
-        throw new BadRequestException('Validation failed: ' + error.message)
-      }
-
-      // 3. Fallback for everything else (unknown errors, connection issues, etc.)
+      // 2. Fallback for everything else (unknown errors, connection issues, etc.)
       throw new InternalServerErrorException('Failed to create user')
     }
   }
