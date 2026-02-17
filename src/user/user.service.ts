@@ -53,4 +53,25 @@ export class UserService {
     if (!foundUser) throw new NotFoundException('User not found')
     return this.prisma.user.update({ data: updateUserDto, where: { id } })
   }
+
+  softDeleteUser(id: number) {
+    return id
+  }
+
+  async hardDeleteUser(id: number) {
+    try {
+      const deletedUser = await this.prisma.user.delete({ where: { id } })
+      return {
+        status: true,
+        id: deletedUser.id,
+        message: 'User premanently deleted',
+      }
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found')
+        }
+      }
+    }
+  }
 }
