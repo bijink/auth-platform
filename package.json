@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "postinstall": "prisma generate",
     "prisma:dev:deploy": "prisma migrate deploy",
     "db:dev:rm": "docker compose -f docker-compose.dev.yml rm dev-db -s -v",
     "db:dev:up": "docker compose -f docker-compose.dev.yml up dev-db -d",
