@@ -1,0 +1,107 @@
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common'
+import * as argon from 'argon2'
+import { Prisma } from 'generated/prisma/client'
+import { PrismaService } from 'src/prisma/prisma.service'
+import { CreateUserDto } from './dto/create-user.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
+
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) {}
+
+  async createUser(createUserDto: CreateUserDto) {
+    try {
+      // generate the password hash
+      const hashedPassword = await argon.hash(createUserDto.password)
+      const createdUser = await this.prisma.user.create({
+        data: { ...createUserDto, password: hashedPassword },
+        omit: { password: true },
+      })
+      return createdUser
+    } catch (error) {
+      // 1. handle validation errors (unique/email constraint violation)
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // P2002 = unique constraint failed
+        if (error.code === 'P2002') {
+          throw new ConflictException('User with this email already exists')
+        }
+        // Fallback for other known request errors
+        throw new ConflictException('Invalid data provided')
+      }
+      // 2. Fallback for everything else (unknown errors, connection issues, etc.)
+      throw new InternalServerErrorException('Failed to create user')
+    }
+  }
+
+  async findUser(id: number) {
+    const foundUser = await this.prisma.user.findUnique({
+      where: { id },
+      omit: { password: true },
+    })
+    if (!foundUser) throw new NotFoundException('User not found')
+    return foundUser
+  }
+
+  async updateUser(id: number, updateUserDto: UpdateUserDto) {
+    try {
+      return await this.prisma.user.update({
+        data: updateUserDto,
+        where: { id },
+        omit: { password: true },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found')
+        }
+      }
+    }
+  }
+
+  async softDeleteUser(id: number) {
+    try {
+      const deletedUser = await this.prisma.user.update({
+        data: { deleted: true },
+        where: { id },
+        omit: { password: true },
+      })
+      return {
+        id: deletedUser.id,
+        status: true,
+        deleted: deletedUser.deleted,
+        message: 'Soft deleted user',
+      }
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found')
+        }
+      }
+    }
+  }
+
+  async hardDeleteUser(id: number) {
+    try {
+      const deletedUser = await this.prisma.user.delete({
+        where: { id },
+        omit: { password: true },
+      })
+      return {
+        id: deletedUser.id,
+        status: true,
+        message: 'User premanently deleted',
+      }
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found')
+        }
+      }
+    }
+  }
+}
