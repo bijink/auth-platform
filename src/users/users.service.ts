@@ -49,7 +49,7 @@ export class UsersService {
 
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
     try {
-      return this.prisma.user.update({
+      return await this.prisma.user.update({
         data: updateUserDto,
         where: { id },
         omit: { password: true },
@@ -78,7 +78,6 @@ export class UsersService {
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        console.log(error.code)
         if (error.code === 'P2025') {
           throw new NotFoundException('User not found')
         }
