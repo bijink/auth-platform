@@ -14,13 +14,13 @@ import { UpdateUserDto } from './dto/update-user.dto'
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto, omitPassword = true) {
     try {
       // generate the password hash
       const hashedPassword = await argon.hash(createUserDto.password)
       const createdUser = await this.prisma.user.create({
         data: { ...createUserDto, password: hashedPassword },
-        omit: { password: true },
+        omit: { password: omitPassword },
       })
       return createdUser
     } catch (error) {
@@ -38,10 +38,10 @@ export class UsersService {
     }
   }
 
-  async findUser(id: number) {
+  async findUser(id: number, omitPassword = true) {
     const foundUser = await this.prisma.user.findUnique({
       where: { id },
-      omit: { password: true },
+      omit: { password: omitPassword },
     })
     if (!foundUser) throw new NotFoundException('User not found')
     return foundUser

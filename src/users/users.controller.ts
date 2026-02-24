@@ -6,20 +6,13 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
 } from '@nestjs/common'
-import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UsersService } from './users.service'
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  createUser(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto)
-  }
 
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
