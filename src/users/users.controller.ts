@@ -7,9 +7,12 @@ import {
   ParseIntPipe,
   Patch,
 } from '@nestjs/common'
+import { Role } from 'generated/prisma/enums'
+import { Roles } from 'src/auth/decorator/roles.decorator'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UsersService } from './users.service'
 
+@Roles(Role.USER)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

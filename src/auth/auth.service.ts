@@ -13,7 +13,7 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { UsersService } from 'src/users/users.service'
 import authConfig from './config/auth.config'
 import { LoginDto } from './dto/login.dto'
-import { ActiveUser } from './interfaces/active-user.interface'
+import { ActiveUser } from './interface/active-user.interface'
 
 @Injectable()
 export class AuthService {
@@ -59,7 +59,7 @@ export class AuthService {
     const accessToken = await this.signToken<Partial<ActiveUser>>(
       user.id,
       this.authConfiguration.tokenExpiresIn,
-      { email: user.email },
+      { email: user.email, role: user.role },
     )
     // generate a refresh token
     const refreshToken = await this.signToken(
