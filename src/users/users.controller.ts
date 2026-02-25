@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
 import { Roles } from 'src/auth/decorator/roles.decorator'
+import { ChangeUserRoleDto } from './dto/change-user-role.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UsersService } from './users.service'
 
@@ -16,6 +17,12 @@ import { UsersService } from './users.service'
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Roles(Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN)
+  @Get()
+  getAllUsers() {
+    return this.usersService.findAllUsers()
+  }
 
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
@@ -38,5 +45,14 @@ export class UsersController {
   @Delete('hard-delete/:id')
   hardDeleteUser(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.hardDeleteUser(id)
+  }
+
+  @Roles(Role.SUPER_ADMIN)
+  @Patch(':id/role')
+  changeUserRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() changeUserRoleDto: ChangeUserRoleDto,
+  ) {
+    return this.usersService.changeUserRole(id, changeUserRoleDto)
   }
 }

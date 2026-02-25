@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -7,12 +8,17 @@ import {
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
+import { ChangeUserRoleDto } from './dto/change-user-role.dto'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+
+  async findAllUsers() {
+    return await this.prisma.user.findMany({ omit: { password: true } })
+  }
 
   async createUser(createUserDto: CreateUserDto, omitPassword = true) {
     try {
@@ -102,6 +108,35 @@ export class UsersService {
           throw new NotFoundException('User not found')
         }
       }
+    }
+  }
+
+  async changeUserRole(id: number, changeUserRoleDto: ChangeUserRoleDto) {
+    // check user exists and current role of the user
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { role: true },
+    })
+    if (!user) throw new NotFoundException('User not found')
+    if (user.role === 'SUPER_ADMIN')
+      throw new ForbiddenException('Cannot change role of a SUPER_ADMIN')
+    if (user.role === changeUserRoleDto.role)
+      throw new ForbiddenException(
+        `User role is '${changeUserRoleDto.role}' already`,
+      )
+    // change user role
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        role: changeUserRoleDto.role,
+        tokenVersion: { increment: 1 },
+      },
+      select: { id: true, role: true, email: true },
+    })
+
+    return {
+      ...updatedUser,
+      message: `User role changed from '${user.role}' to '${changeUserRoleDto.role}'`,
     }
   }
 }
