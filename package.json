@@ -94,7 +94,7 @@
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/../src/$1",
-      "^generated/prisma/client$": "<rootDir>/__mocks__/generated-prisma-client.ts"
+      "^generated/(.*)$": "<rootDir>/../dist/generated/$1"
     }
   }
 }

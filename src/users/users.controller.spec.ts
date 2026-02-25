@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common'
+import { NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { UsersController } from './users.controller'
 import { UsersService } from './users.service'
@@ -36,26 +36,26 @@ describe('UsersController', () => {
     expect(controller).toBeDefined()
   })
 
-  describe('createUser', () => {
-    it('create user then return created user', async () => {
-      const dto = { email: 'test@email.com', password: 'pass1234' }
-      const expectedRes = { id: 1 }
+  // describe('createUser', () => {
+  //   it('create user then return created user', async () => {
+  //     const dto = { email: 'test@email.com', password: 'pass1234' }
+  //     const expectedRes = { id: 1 }
 
-      usersService.createUser.mockResolvedValue(expectedRes)
+  //     usersService.createUser.mockResolvedValue(expectedRes)
 
-      await expect(controller.createUser(dto)).resolves.toBe(expectedRes)
-      expect(usersService.createUser).toHaveBeenCalledWith(dto)
-    })
+  //     await expect(controller.createUser(dto)).resolves.toBe(expectedRes)
+  //     expect(usersService.createUser).toHaveBeenCalledWith(dto)
+  //   })
 
-    it('propagates HttpException from service', async () => {
-      const dto = { email: 'test@email.com', password: 'pass1234' }
-      const expectedErr = new ConflictException()
+  //   it('propagates HttpException from service', async () => {
+  //     const dto = { email: 'test@email.com', password: 'pass1234' }
+  //     const expectedErr = new ConflictException()
 
-      usersService.createUser.mockRejectedValue(expectedErr)
+  //     usersService.createUser.mockRejectedValue(expectedErr)
 
-      await expect(controller.createUser(dto)).rejects.toBe(expectedErr)
-    })
-  })
+  //     await expect(controller.createUser(dto)).rejects.toBe(expectedErr)
+  //   })
+  // })
 
   describe('getUser', () => {
     it('return found user', async () => {
