@@ -38,10 +38,9 @@ export class AuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException()
 
     try {
-      const payload: ActiveUser = await this.jwtService.verifyAsync(
-        token,
-        this.authConfiguration,
-      )
+      const payload: ActiveUser = await this.jwtService.verifyAsync(token, {
+        secret: this.authConfiguration.secret,
+      })
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
@@ -55,7 +54,7 @@ export class AuthGuard implements CanActivate {
       }
 
       request[REQUEST_USER_KEY] = {
-        userId: payload.sub,
+        sub: payload.sub,
         role: user.role,
       }
     } catch (error) {

@@ -8,6 +8,7 @@ import type { ConfigType } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import * as argon from 'argon2'
 import { User } from 'generated/prisma/browser'
+import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { UsersService } from 'src/users/users.service'
@@ -47,6 +48,25 @@ export class AuthService {
     if (!pwMatches) throw new ForbiddenException('Incorrect password')
     // send back the user
     return this.generateTokens(user)
+  }
+
+  async logoutFromAllDevices(userId: number) {
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          tokenVersion: { increment: 1 },
+        },
+      })
+      return { id: userId, message: 'User logged out from all devices' }
+    } catch (error) {
+      console.error(error)
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not exists')
+        }
+      }
+    }
   }
 
   public refreshToken() {}
