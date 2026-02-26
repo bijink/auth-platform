@@ -3,9 +3,10 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
-import { JwtService } from '@nestjs/jwt'
+import { JsonWebTokenError, JwtService, JwtSignOptions } from '@nestjs/jwt'
 import * as argon from 'argon2'
 import { User } from 'generated/prisma/browser'
 import { Prisma } from 'generated/prisma/client'
@@ -14,7 +15,9 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { UsersService } from 'src/users/users.service'
 import authConfig from './config/auth.config'
 import { LoginDto } from './dto/login.dto'
-import { ActiveUser } from './interface/active-user.interface'
+import { RefreshTokenDto } from './dto/refresh-token.dto'
+import { JwtAccessPayload } from './interface/jwt-access-payload.interface'
+import { JwtRefreshPayload } from './interface/jwt-refresh-payload.interface'
 
 @Injectable()
 export class AuthService {
@@ -50,7 +53,7 @@ export class AuthService {
     return this.generateTokens(user)
   }
 
-  async logoutFromAllDevices(userId: number) {
+  public async logoutFromAllDevices(userId: number) {
     try {
       await this.prisma.user.update({
         where: { id: userId },
@@ -69,23 +72,49 @@ export class AuthService {
     }
   }
 
-  public refreshToken() {}
+  public async refreshToken(refreshTokenDto: RefreshTokenDto) {
+    try {
+      // verify the refresh token
+      const { sub }: JwtRefreshPayload = await this.jwtService.verifyAsync(
+        refreshTokenDto.token,
+        { secret: this.authConfiguration.secret },
+      )
+      // find the user from db using user id
+      const user = await this.prisma.user.findUnique({
+        where: { id: sub },
+      })
+      if (!user) throw new UnauthorizedException('User not exists')
+      // generate access token and refresh token
+      return this.generateTokens(user)
+    } catch (error) {
+      if (error instanceof JsonWebTokenError) {
+        throw new UnauthorizedException(error)
+      }
+      if (error instanceof UnauthorizedException) throw error
+    }
+  }
 
   private async generateTokens(user: User): Promise<{
     accessToken: string
     refreshToken: string
   }> {
     // generate an access token
-    const accessToken = await this.signToken<Partial<ActiveUser>>(
+    const accessToken = await this.signToken<Partial<JwtAccessPayload>>(
       user.id,
-      this.authConfiguration.tokenExpiresIn,
-      { version: user.tokenVersion },
+      {
+        secret: this.authConfiguration.secret,
+        expiresIn: this.authConfiguration.expiresIn,
+      },
+      {
+        email: user.email,
+        version: user.tokenVersion,
+      },
     )
     // generate a refresh token
-    const refreshToken = await this.signToken(
-      user.id,
-      this.authConfiguration.refreshTokenExpiresIn,
-    )
+    const refreshToken = await this.signToken(user.id, {
+      secret: this.authConfiguration.refreshSecret,
+      expiresIn: this.authConfiguration.refreshExpiresIn,
+    })
 
     return {
       accessToken: accessToken,
@@ -93,16 +122,11 @@ export class AuthService {
     }
   }
 
-  private async signToken<T>(userId: number, expiresIn: number, payload?: T) {
-    return await this.jwtService.signAsync(
-      {
-        sub: userId,
-        ...payload,
-      },
-      {
-        secret: this.authConfiguration.secret,
-        expiresIn,
-      },
-    )
+  private async signToken<T>(
+    sub: number,
+    options: JwtSignOptions,
+    payload?: T,
+  ) {
+    return await this.jwtService.signAsync({ sub, ...payload }, options)
   }
 }
