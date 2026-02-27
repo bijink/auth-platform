@@ -13,6 +13,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import authConfig from '../config/auth.config'
 import { IS_PUBLIC_KEY } from '../decorator/public.decorator'
 import { JwtAccessPayload } from '../interface/jwt-access-payload.interface'
+import { extractTokenFromHeader } from '../util/extract-token'
 
 export const REQUEST_USER_KEY = 'user'
 
@@ -34,22 +35,20 @@ export class AuthGuard implements CanActivate {
     if (isPublic) return true
 
     const request: Request = context.switchToHttp().getRequest()
-    const token = this.extractTokenFromHeader(request)
-    if (!token) throw new UnauthorizedException()
+    const token = extractTokenFromHeader(request)
+    if (!token) throw new UnauthorizedException('Token missing')
 
     try {
+      // verify jwt token
       const payload: JwtAccessPayload = await this.jwtService.verifyAsync(
         token,
-        {
-          secret: this.authConfiguration.secret,
-        },
+        { secret: this.authConfiguration.secret },
       )
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
         select: { email: true, role: true, tokenVersion: true },
       })
-
       if (!user) throw new UnauthorizedException('User not exists')
 
       if (user.tokenVersion !== payload.version) {
@@ -69,10 +68,5 @@ export class AuthGuard implements CanActivate {
     }
 
     return true
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? []
-    return type === 'Bearer' ? token : undefined
   }
 }

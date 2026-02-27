@@ -7,11 +7,13 @@ import {
 } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
 import { JsonWebTokenError, JwtService } from '@nestjs/jwt'
+import * as argon from 'argon2'
 import { Request } from 'express'
 import { PrismaService } from 'src/prisma/prisma.service'
 import authConfig from '../config/auth.config'
-
-export const REQUEST_USER_KEY = 'user'
+import { JwtRefreshPayload } from '../interface/jwt-refresh-payload.interface'
+import { extractTokenFromHeader } from '../util/extract-token'
+import { REQUEST_USER_KEY } from './auth.guard'
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
@@ -24,29 +26,27 @@ export class RefreshTokenGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest()
-    const token = this.extractTokenFromHeader(request)
-    if (!token) throw new UnauthorizedException()
+    const token = extractTokenFromHeader(request)
+    if (!token) throw new UnauthorizedException('Token missing')
 
     try {
-      const payload: { sub: number } = await this.jwtService.verifyAsync(
+      // verify jwt token
+      const payload: JwtRefreshPayload = await this.jwtService.verifyAsync(
         token,
-        { secret: this.authConfiguration.secret },
+        { secret: this.authConfiguration.refreshSecret },
       )
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-        select: { role: true, tokenVersion: true },
+      // find refreshToken saved in db
+      const refreshTokenData = await this.prisma.refreshToken.findUnique({
+        where: { id: payload.tokenId },
       })
-
-      if (!user) throw new UnauthorizedException('User not exists')
-
-      // if (user.tokenVersion !== payload.version) {
-      //   throw new UnauthorizedException('Token revoked')
-      // }
+      if (!refreshTokenData) throw new UnauthorizedException('Token revoked')
+      // verify refresh token with refresh token saved in db
+      const rtMatches = await argon.verify(refreshTokenData.token, token)
+      if (!rtMatches) throw new UnauthorizedException('Token unverified')
 
       request[REQUEST_USER_KEY] = {
         sub: payload.sub,
-        role: user.role,
+        tokenId: refreshTokenData.id,
       }
     } catch (error) {
       if (error instanceof JsonWebTokenError) {
@@ -56,10 +56,5 @@ export class RefreshTokenGuard implements CanActivate {
     }
 
     return true
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? []
-    return type === 'Bearer' ? token : undefined
   }
 }

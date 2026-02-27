@@ -1,10 +1,17 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { AuthService } from './auth.service'
 import { Public } from './decorator/public.decorator'
 import { User } from './decorator/user.decorator'
 import { LoginDto } from './dto/login.dto'
-import { RefreshTokenDto } from './dto/refresh-token.dto'
+import { RefreshTokenGuard } from './guard/refresh-token.guard'
 
 @Controller('auth')
 export class AuthController {
@@ -29,10 +36,11 @@ export class AuthController {
     return this.authService.logoutFromAllDevices(userId)
   }
 
-  @Public()
   @Post('refresh-token')
+  @Public()
+  @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
-  refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto)
+  refreshToken(@User('sub') userId: number, @User('tokenId') tokenId: string) {
+    return this.authService.refreshToken(userId, tokenId)
   }
 }

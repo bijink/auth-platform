@@ -2,12 +2,14 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
 import { JsonWebTokenError, JwtService, JwtSignOptions } from '@nestjs/jwt'
 import * as argon from 'argon2'
+import { randomUUID } from 'crypto'
 import { User } from 'generated/prisma/browser'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
@@ -15,7 +17,6 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { UsersService } from 'src/users/users.service'
 import authConfig from './config/auth.config'
 import { LoginDto } from './dto/login.dto'
-import { RefreshTokenDto } from './dto/refresh-token.dto'
 import { JwtAccessPayload } from './interface/jwt-access-payload.interface'
 import { JwtRefreshPayload } from './interface/jwt-refresh-payload.interface'
 
@@ -72,18 +73,15 @@ export class AuthService {
     }
   }
 
-  public async refreshToken(refreshTokenDto: RefreshTokenDto) {
+  public async refreshToken(userId: number, tokenId: string) {
     try {
-      // verify the refresh token
-      const { sub }: JwtRefreshPayload = await this.jwtService.verifyAsync(
-        refreshTokenDto.token,
-        { secret: this.authConfiguration.secret },
-      )
-      // find the user from db using user id
+      // find user from db using userId
       const user = await this.prisma.user.findUnique({
-        where: { id: sub },
+        where: { id: userId },
       })
       if (!user) throw new UnauthorizedException('User not exists')
+      // delete used refresh token from db
+      await this.prisma.refreshToken.delete({ where: { id: tokenId } })
       // generate access token and refresh token
       return this.generateTokens(user)
     } catch (error) {
@@ -98,27 +96,46 @@ export class AuthService {
     accessToken: string
     refreshToken: string
   }> {
-    // generate an access token
-    const accessToken = await this.signToken<Partial<JwtAccessPayload>>(
-      user.id,
-      {
-        secret: this.authConfiguration.secret,
-        expiresIn: this.authConfiguration.expiresIn,
-      },
-      {
-        email: user.email,
-        version: user.tokenVersion,
-      },
-    )
-    // generate a refresh token
-    const refreshToken = await this.signToken(user.id, {
-      secret: this.authConfiguration.refreshSecret,
-      expiresIn: this.authConfiguration.refreshExpiresIn,
-    })
+    try {
+      // generate access token
+      const accessToken = await this.signToken<Partial<JwtAccessPayload>>(
+        user.id,
+        {
+          secret: this.authConfiguration.secret,
+          expiresIn: this.authConfiguration.expiresIn,
+        },
+        {
+          email: user.email,
+          version: user.tokenVersion,
+        },
+      )
 
-    return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      // generate refresh token
+      const refreshTokenId = randomUUID()
+      const refreshToken = await this.signToken<Partial<JwtRefreshPayload>>(
+        user.id,
+        {
+          secret: this.authConfiguration.refreshSecret,
+          expiresIn: this.authConfiguration.refreshExpiresIn,
+        },
+        {
+          tokenId: refreshTokenId,
+        },
+      )
+      // hash refresh token
+      const hashedRefreshToken = await argon.hash(refreshToken)
+      // store refresh token in db
+      await this.prisma.refreshToken.create({
+        data: {
+          id: refreshTokenId,
+          token: hashedRefreshToken,
+          userId: user.id,
+        },
+      })
+      // return access and refresh tokens
+      return { accessToken, refreshToken }
+    } catch (error) {
+      throw new InternalServerErrorException(error)
     }
   }
 

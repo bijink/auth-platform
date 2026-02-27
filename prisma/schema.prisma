@@ -25,8 +25,9 @@ model User {
   email    String @unique
   password String
 
-  firstName String?
-  lastName  String?
+  firstName     String?
+  lastName      String?
+  refreshTokens RefreshToken[]
 
   @@map("users")
 }
@@ -36,4 +37,14 @@ enum Role {
   MODERATOR
   ADMIN
   SUPER_ADMIN
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    Int      @map("user_id")
+  token     String   @map("token")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }
