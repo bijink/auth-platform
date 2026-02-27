@@ -62,9 +62,9 @@ export class AuthService {
           tokenVersion: { increment: 1 },
         },
       })
+      await this.prisma.refreshToken.deleteMany({ where: { userId } })
       return { id: userId, message: 'User logged out from all devices' }
     } catch (error) {
-      console.error(error)
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
           throw new NotFoundException('User not exists')
@@ -92,6 +92,11 @@ export class AuthService {
     }
   }
 
+  public async revokeRefreshToken(tokenId: string) {
+    await this.prisma.refreshToken.delete({ where: { id: tokenId } })
+    return { message: 'Refresh token revoked successfully' }
+  }
+
   private async generateTokens(user: User): Promise<{
     accessToken: string
     refreshToken: string
@@ -110,8 +115,9 @@ export class AuthService {
         },
       )
 
-      // generate refresh token
+      // create random uuid for refresh token
       const refreshTokenId = randomUUID()
+      // generate refresh token
       const refreshToken = await this.signToken<Partial<JwtRefreshPayload>>(
         user.id,
         {
@@ -119,7 +125,7 @@ export class AuthService {
           expiresIn: this.authConfiguration.refreshExpiresIn,
         },
         {
-          tokenId: refreshTokenId,
+          rtid: refreshTokenId,
         },
       )
       // hash refresh token

@@ -11,6 +11,7 @@ import * as argon from 'argon2'
 import { Request } from 'express'
 import { PrismaService } from 'src/prisma/prisma.service'
 import authConfig from '../config/auth.config'
+import { ActiveUser } from '../interface/active-user.interface'
 import { JwtRefreshPayload } from '../interface/jwt-refresh-payload.interface'
 import { extractTokenFromHeader } from '../util/extract-token'
 import { REQUEST_USER_KEY } from './auth.guard'
@@ -37,7 +38,7 @@ export class RefreshTokenGuard implements CanActivate {
       )
       // find refreshToken saved in db
       const refreshTokenData = await this.prisma.refreshToken.findUnique({
-        where: { id: payload.tokenId },
+        where: { id: payload.rtid },
       })
       if (!refreshTokenData) throw new UnauthorizedException('Token revoked')
       // verify refresh token with refresh token saved in db
@@ -46,8 +47,8 @@ export class RefreshTokenGuard implements CanActivate {
 
       request[REQUEST_USER_KEY] = {
         sub: payload.sub,
-        tokenId: refreshTokenData.id,
-      }
+        rtid: refreshTokenData.id,
+      } as ActiveUser
     } catch (error) {
       if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException(error)

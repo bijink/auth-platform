@@ -1,6 +1,6 @@
 export interface JwtRefreshPayload {
   sub: number
-  tokenId: string
+  rtid: string //refreshTokenId
   iat: number
   exp: number
 }

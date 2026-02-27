@@ -30,7 +30,7 @@ export class AuthController {
     return this.authService.login(loginDto)
   }
 
-  @Post('logout')
+  @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   logoutAll(@User('sub') userId: number) {
     return this.authService.logoutFromAllDevices(userId)
@@ -40,7 +40,18 @@ export class AuthController {
   @Public()
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
-  refreshToken(@User('sub') userId: number, @User('tokenId') tokenId: string) {
-    return this.authService.refreshToken(userId, tokenId)
+  refreshToken(
+    @User('sub') userId: number,
+    @User('rtid') refreshTokenId: string,
+  ) {
+    return this.authService.refreshToken(userId, refreshTokenId)
+  }
+
+  @Post('revoke-refresh-token')
+  @Public()
+  @UseGuards(RefreshTokenGuard)
+  @HttpCode(HttpStatus.OK)
+  revokeRefreshToken(@User('rtid') refreshTokenId: string) {
+    return this.authService.revokeRefreshToken(refreshTokenId)
   }
 }

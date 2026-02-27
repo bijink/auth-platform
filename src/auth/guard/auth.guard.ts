@@ -12,6 +12,7 @@ import { Request } from 'express'
 import { PrismaService } from 'src/prisma/prisma.service'
 import authConfig from '../config/auth.config'
 import { IS_PUBLIC_KEY } from '../decorator/public.decorator'
+import { ActiveUser } from '../interface/active-user.interface'
 import { JwtAccessPayload } from '../interface/jwt-access-payload.interface'
 import { extractTokenFromHeader } from '../util/extract-token'
 
@@ -59,7 +60,7 @@ export class AuthGuard implements CanActivate {
         sub: payload.sub,
         email: user.email,
         role: user.role,
-      }
+      } as ActiveUser
     } catch (error) {
       if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException(error)
