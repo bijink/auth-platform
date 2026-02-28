@@ -11,10 +11,9 @@ import { JsonWebTokenError, JwtService } from '@nestjs/jwt'
 import { Request } from 'express'
 import { PrismaService } from 'src/prisma/prisma.service'
 import authConfig from '../config/auth.config'
-import { IS_PUBLIC_KEY } from '../decorator/public.decorator'
-import { ActiveUser } from '../interface/active-user.interface'
-import { JwtAccessPayload } from '../interface/jwt-access-payload.interface'
-import { extractTokenFromHeader } from '../util/extract-token'
+import { IS_PUBLIC_KEY } from '../decorator'
+import { ActiveUser, JwtAccessPayload } from '../interface'
+import { extractTokenFromHeader } from '../util'
 
 export const REQUEST_USER_KEY = 'user'
 

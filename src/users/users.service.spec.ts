@@ -6,8 +6,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { CreateUserDto } from './dto/create-user.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
+import { CreateUserDto, UpdateUserDto } from './dto'
 import { UsersService } from './users.service'
 
 const mockPrismaService = {

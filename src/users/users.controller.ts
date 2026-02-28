@@ -8,9 +8,8 @@ import {
   Patch,
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
-import { Roles } from 'src/auth/decorator/roles.decorator'
-import { ChangeUserRoleDto } from './dto/change-user-role.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
+import { Roles } from 'src/auth/decorator'
+import { ChangeUserRoleDto, UpdateUserDto } from './dto'
 import { UsersService } from './users.service'
 
 @Roles(Role.USER)

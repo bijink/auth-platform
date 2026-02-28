@@ -3,8 +3,8 @@ import {
   ExecutionContext,
   NotImplementedException,
 } from '@nestjs/common'
-import { REQUEST_USER_KEY } from '../guard/auth.guard'
-import { ActiveUser } from '../interface/active-user.interface'
+import { REQUEST_USER_KEY } from '../guard'
+import { ActiveUser } from '../interface'
 
 export const User = createParamDecorator(
   (field: keyof ActiveUser | undefined, ctx: ExecutionContext) => {

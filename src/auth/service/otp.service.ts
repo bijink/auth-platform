@@ -3,8 +3,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import * as argon from 'argon2'
 import Redis from 'ioredis'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { EmailOtpDto, VerifyOtpDto } from '../dto/otp.dto'
-import { generateOtp } from '../util/otp.util'
+import { EmailOtpDto, VerifyOtpDto } from '../dto'
+import { generateOtp } from '../util'
 
 @Injectable()
 export class OtpService {

@@ -6,15 +6,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
-import { CreateUserDto } from 'src/users/dto/create-user.dto'
-import { Public } from './decorator/public.decorator'
-import { User } from './decorator/user.decorator'
-import { LoginDto } from './dto/login.dto'
-import { EmailOtpDto, VerifyOtpDto } from './dto/otp.dto'
-import { AuthGuard } from './guard/auth.guard'
-import { RefreshTokenGuard } from './guard/refresh-token.guard'
-import { AuthService } from './service/auth.service'
-import { OtpService } from './service/otp.service'
+import { CreateUserDto } from 'src/users/dto'
+import { AuthService } from './auth.service'
+import { Public, User } from './decorator'
+import { EmailOtpDto, LoginDto, VerifyOtpDto } from './dto'
+import { AuthGuard, RefreshTokenGuard } from './guard'
+import { OtpService } from './service'
 
 @Public()
 @Controller('auth')

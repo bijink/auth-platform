@@ -8,9 +8,7 @@ import {
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { ChangeUserRoleDto } from './dto/change-user-role.dto'
-import { CreateUserDto } from './dto/create-user.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
+import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
 
 @Injectable()
 export class UsersService {

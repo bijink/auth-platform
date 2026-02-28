@@ -9,16 +9,14 @@ import {
 import type { ConfigType } from '@nestjs/config'
 import { JsonWebTokenError, JwtService, JwtSignOptions } from '@nestjs/jwt'
 import * as argon from 'argon2'
-import { User } from 'generated/prisma/browser'
-import { Prisma } from 'generated/prisma/client'
+import { Prisma, User } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { CreateUserDto } from 'src/users/dto/create-user.dto'
+import { CreateUserDto } from 'src/users/dto'
 import { UsersService } from 'src/users/users.service'
 import { v7 as uuidv7 } from 'uuid'
-import authConfig from '../config/auth.config'
-import { LoginDto } from '../dto/login.dto'
-import { JwtAccessPayload } from '../interface/jwt-access-payload.interface'
-import { JwtRefreshPayload } from '../interface/jwt-refresh-payload.interface'
+import authConfig from './config/auth.config'
+import { LoginDto } from './dto'
+import { JwtAccessPayload, JwtRefreshPayload } from './interface'
 
 @Injectable()
 export class AuthService {
