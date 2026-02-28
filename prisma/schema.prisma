@@ -48,3 +48,10 @@ model RefreshToken {
 
   @@map("refresh_tokens")
 }
+
+model VerifiedEmail {
+  email     String   @id
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+
+  @@map("verified_emails")
+}

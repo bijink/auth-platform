@@ -8,8 +8,8 @@
   "scripts": {
     "postinstall": "prisma generate",
     "prisma:dev:deploy": "prisma migrate deploy",
-    "db:dev:rm": "docker compose -f docker-compose.dev.yml rm dev-db -s -v",
-    "db:dev:up": "docker compose -f docker-compose.dev.yml up dev-db -d",
+    "db:dev:rm": "docker compose -f docker-compose.dev.yml rm dev-db redis -s -v",
+    "db:dev:up": "docker compose -f docker-compose.dev.yml up dev-db redis -d",
     "db:dev:restart": "pnpm db:dev:rm && pnpm db:dev:up && sleep 1 && pnpm prisma:dev:deploy",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -29,6 +29,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@nestjs-modules/ioredis": "^2.0.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
@@ -41,6 +42,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dotenv": "^17.3.1",
+    "ioredis": "^5.10.0",
     "joi": "^18.0.2",
     "pg": "^8.18.0",
     "reflect-metadata": "^0.2.2",

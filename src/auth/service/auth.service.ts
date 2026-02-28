@@ -15,10 +15,10 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { UsersService } from 'src/users/users.service'
 import { v7 as uuidv7 } from 'uuid'
-import authConfig from './config/auth.config'
-import { LoginDto } from './dto/login.dto'
-import { JwtAccessPayload } from './interface/jwt-access-payload.interface'
-import { JwtRefreshPayload } from './interface/jwt-refresh-payload.interface'
+import authConfig from '../config/auth.config'
+import { LoginDto } from '../dto/login.dto'
+import { JwtAccessPayload } from '../interface/jwt-access-payload.interface'
+import { JwtRefreshPayload } from '../interface/jwt-refresh-payload.interface'
 
 @Injectable()
 export class AuthService {
@@ -26,14 +26,20 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
-
     @Inject(authConfig.KEY)
     private readonly authConfiguration: ConfigType<typeof authConfig>,
   ) {}
 
   public async signup(createUserDto: CreateUserDto) {
+    const isEmailVerified = await this.prisma.verifiedEmail.findUnique({
+      where: { email: createUserDto.email },
+    })
+    if (!isEmailVerified) throw new UnauthorizedException('Email not verified')
+
     const user = await this.usersService.createUser(createUserDto)
     const tokens = await this.generateTokens(user)
+    await this.prisma.verifiedEmail.delete({ where: { email: user.email } })
+
     return { ...user, ...tokens }
   }
 
