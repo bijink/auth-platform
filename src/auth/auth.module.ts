@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
-import { UsersModule } from 'src/users/users.module'
+import { UserModule } from 'src/user/user.module'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import authConfig from './config/auth.config'
@@ -11,7 +11,7 @@ import { OtpService } from './service'
 
 @Module({
   imports: [
-    UsersModule,
+    UserModule,
     ConfigModule.forFeature(authConfig),
     JwtModule.registerAsync(authConfig.asProvider()),
   ],

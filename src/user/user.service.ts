@@ -11,7 +11,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async findAllUsers() {

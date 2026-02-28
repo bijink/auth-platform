@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { UsersController } from './users.controller'
-import { UsersService } from './users.service'
+import { UserController } from './user.controller'
+import { UserService } from './user.service'
 
 const mockUsersService = {
   createUser: jest.fn(),
@@ -12,24 +12,24 @@ const mockUsersService = {
 }
 
 describe('UsersController', () => {
-  let controller: UsersController
-  let usersService: typeof mockUsersService
+  let controller: UserController
+  let userService: typeof mockUsersService
 
   beforeEach(async () => {
     jest.clearAllMocks()
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [UsersController],
+      controllers: [UserController],
       providers: [
         {
-          provide: UsersService,
+          provide: UserService,
           useValue: mockUsersService,
         },
       ],
     }).compile()
 
-    controller = module.get<UsersController>(UsersController)
-    usersService = module.get(UsersService)
+    controller = module.get<UserController>(UserController)
+    userService = module.get(UserService)
   })
 
   it('should be defined', () => {
@@ -41,17 +41,17 @@ describe('UsersController', () => {
   //     const dto = { email: 'test@email.com', password: 'pass1234' }
   //     const expectedRes = { id: 1 }
 
-  //     usersService.createUser.mockResolvedValue(expectedRes)
+  //     userService.createUser.mockResolvedValue(expectedRes)
 
   //     await expect(controller.createUser(dto)).resolves.toBe(expectedRes)
-  //     expect(usersService.createUser).toHaveBeenCalledWith(dto)
+  //     expect(userService.createUser).toHaveBeenCalledWith(dto)
   //   })
 
   //   it('propagates HttpException from service', async () => {
   //     const dto = { email: 'test@email.com', password: 'pass1234' }
   //     const expectedErr = new ConflictException()
 
-  //     usersService.createUser.mockRejectedValue(expectedErr)
+  //     userService.createUser.mockRejectedValue(expectedErr)
 
   //     await expect(controller.createUser(dto)).rejects.toBe(expectedErr)
   //   })
@@ -61,16 +61,16 @@ describe('UsersController', () => {
     it('return found user', async () => {
       const expectedRes = { id: 1 }
 
-      usersService.findUser.mockResolvedValue(expectedRes)
+      userService.findUser.mockResolvedValue(expectedRes)
 
       await expect(controller.getUser(1)).resolves.toBe(expectedRes)
-      expect(usersService.findUser).toHaveBeenCalledWith(1)
+      expect(userService.findUser).toHaveBeenCalledWith(1)
     })
 
     it('propagates HttpException from service', async () => {
       const expectedErr = new NotFoundException()
 
-      usersService.findUser.mockRejectedValue(expectedErr)
+      userService.findUser.mockRejectedValue(expectedErr)
 
       await expect(controller.getUser(1)).rejects.toBe(expectedErr)
     })
@@ -81,16 +81,16 @@ describe('UsersController', () => {
     it('return updated user', async () => {
       const expectedRes = { id: 1 }
 
-      usersService.updateUser.mockResolvedValue(expectedRes)
+      userService.updateUser.mockResolvedValue(expectedRes)
 
       await expect(controller.updateUser(1, dto)).resolves.toBe(expectedRes)
-      expect(usersService.updateUser).toHaveBeenCalledWith(1, dto)
+      expect(userService.updateUser).toHaveBeenCalledWith(1, dto)
     })
 
     it('propagates HttpException from service', async () => {
       const expectedErr = new NotFoundException()
 
-      usersService.updateUser.mockRejectedValue(expectedErr)
+      userService.updateUser.mockRejectedValue(expectedErr)
 
       await expect(controller.updateUser(2, dto)).rejects.toBe(expectedErr)
     })
@@ -100,16 +100,16 @@ describe('UsersController', () => {
     it('return delete status', async () => {
       const expectedRes = { id: 1 }
 
-      usersService.softDeleteUser.mockResolvedValue(expectedRes)
+      userService.softDeleteUser.mockResolvedValue(expectedRes)
 
       await expect(controller.deleteUser(1)).resolves.toBe(expectedRes)
-      expect(usersService.softDeleteUser).toHaveBeenCalledWith(1)
+      expect(userService.softDeleteUser).toHaveBeenCalledWith(1)
     })
 
     it('propagates HttpException from service', async () => {
       const expectedErr = new NotFoundException()
 
-      usersService.softDeleteUser.mockRejectedValue(expectedErr)
+      userService.softDeleteUser.mockRejectedValue(expectedErr)
 
       await expect(controller.deleteUser(1)).rejects.toBe(expectedErr)
     })
@@ -119,16 +119,16 @@ describe('UsersController', () => {
     it('return delete status', async () => {
       const expectedRes = { id: 1 }
 
-      usersService.hardDeleteUser.mockResolvedValue(expectedRes)
+      userService.hardDeleteUser.mockResolvedValue(expectedRes)
 
       await expect(controller.hardDeleteUser(1)).resolves.toBe(expectedRes)
-      expect(usersService.hardDeleteUser).toHaveBeenCalledWith(1)
+      expect(userService.hardDeleteUser).toHaveBeenCalledWith(1)
     })
 
     it('propagates HttpException from service', async () => {
       const expectedErr = new NotFoundException()
 
-      usersService.hardDeleteUser.mockRejectedValue(expectedErr)
+      userService.hardDeleteUser.mockRejectedValue(expectedErr)
 
       await expect(controller.hardDeleteUser(1)).rejects.toBe(expectedErr)
     })

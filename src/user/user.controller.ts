@@ -10,22 +10,22 @@ import {
 import { Role } from 'generated/prisma/enums'
 import { Roles } from 'src/auth/decorator'
 import { ChangeUserRoleDto, UpdateUserDto } from './dto'
-import { UsersService } from './users.service'
+import { UserService } from './user.service'
 
 @Roles(Role.USER)
 @Controller('users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+export class UserController {
+  constructor(private readonly userService: UserService) {}
 
   @Roles(Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN)
   @Get()
   getAllUsers() {
-    return this.usersService.findAllUsers()
+    return this.userService.findAllUsers()
   }
 
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findUser(id)
+    return this.userService.findUser(id)
   }
 
   @Patch(':id')
@@ -33,17 +33,17 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.updateUser(id, updateUserDto)
+    return this.userService.updateUser(id, updateUserDto)
   }
 
   @Delete(':id')
   deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.softDeleteUser(id)
+    return this.userService.softDeleteUser(id)
   }
 
   @Delete('hard-delete/:id')
   hardDeleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.hardDeleteUser(id)
+    return this.userService.hardDeleteUser(id)
   }
 
   @Roles(Role.SUPER_ADMIN)
@@ -52,6 +52,6 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() changeUserRoleDto: ChangeUserRoleDto,
   ) {
-    return this.usersService.changeUserRole(id, changeUserRoleDto)
+    return this.userService.changeUserRole(id, changeUserRoleDto)
   }
 }

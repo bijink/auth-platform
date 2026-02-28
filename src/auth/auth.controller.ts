@@ -6,7 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
-import { CreateUserDto } from 'src/users/dto'
+import { CreateUserDto } from 'src/user/dto'
 import { AuthService } from './auth.service'
 import { Public, User } from './decorator'
 import { EmailOtpDto, LoginDto, VerifyOtpDto } from './dto'
