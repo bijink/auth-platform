@@ -9,12 +9,12 @@ import {
 import type { ConfigType } from '@nestjs/config'
 import { JsonWebTokenError, JwtService, JwtSignOptions } from '@nestjs/jwt'
 import * as argon from 'argon2'
-import { randomUUID } from 'crypto'
 import { User } from 'generated/prisma/browser'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateUserDto } from 'src/users/dto/create-user.dto'
 import { UsersService } from 'src/users/users.service'
+import { v7 as uuidv7 } from 'uuid'
 import authConfig from './config/auth.config'
 import { LoginDto } from './dto/login.dto'
 import { JwtAccessPayload } from './interface/jwt-access-payload.interface'
@@ -115,8 +115,8 @@ export class AuthService {
         },
       )
 
-      // create random uuid for refresh token
-      const refreshTokenId = randomUUID()
+      // create uuid for refresh token
+      const refreshTokenId = uuidv7()
       // generate refresh token
       const refreshToken = await this.signToken<Partial<JwtRefreshPayload>>(
         user.id,

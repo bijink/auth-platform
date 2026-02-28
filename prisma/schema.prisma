@@ -40,7 +40,7 @@ enum Role {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @db.Uuid
   userId    Int      @map("user_id")
   token     String   @map("token")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
