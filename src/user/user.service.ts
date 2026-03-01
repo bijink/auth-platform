@@ -18,7 +18,10 @@ export class UserService {
     return await this.prisma.user.findMany({ omit: { password: true } })
   }
 
-  async createUser(createUserDto: CreateUserDto, omitPassword = true) {
+  async createUser(
+    createUserDto: Omit<CreateUserDto, 'verificationCode'>,
+    omitPassword = true,
+  ) {
     try {
       // generate the password hash
       const hashedPassword = await argon.hash(createUserDto.password)
@@ -38,7 +41,7 @@ export class UserService {
         throw new ConflictException('Invalid data provided')
       }
       // 2. Fallback for everything else (unknown errors, connection issues, etc.)
-      throw new InternalServerErrorException('Failed to create user')
+      throw new InternalServerErrorException(error)
     }
   }
 

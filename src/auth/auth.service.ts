@@ -17,6 +17,7 @@ import { v7 as uuidv7 } from 'uuid'
 import authConfig from './config/auth.config'
 import { LoginDto } from './dto'
 import { JwtAccessPayload, JwtRefreshPayload } from './interface'
+import { OtpService } from './service'
 
 @Injectable()
 export class AuthService {
@@ -26,18 +27,14 @@ export class AuthService {
     private readonly prisma: PrismaService,
     @Inject(authConfig.KEY)
     private readonly authConfiguration: ConfigType<typeof authConfig>,
+    private readonly otpService: OtpService,
   ) {}
 
   public async signup(createUserDto: CreateUserDto) {
-    const isEmailVerified = await this.prisma.verifiedEmail.findUnique({
-      where: { email: createUserDto.email },
-    })
-    if (!isEmailVerified) throw new UnauthorizedException('Email not verified')
-
-    const user = await this.usersService.createUser(createUserDto)
+    const { verificationCode, ...dto } = createUserDto
+    await this.otpService.verifyCode(dto.email, verificationCode)
+    const user = await this.usersService.createUser(dto)
     const tokens = await this.generateTokens(user)
-    await this.prisma.verifiedEmail.delete({ where: { email: user.email } })
-
     return { ...user, ...tokens }
   }
 
