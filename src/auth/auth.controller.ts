@@ -21,18 +21,6 @@ export class AuthController {
     private readonly otpService: OtpService,
   ) {}
 
-  @Post('email-otp')
-  @HttpCode(HttpStatus.OK)
-  emailOtp(@Body() emailOtpDto: EmailOtpDto) {
-    return this.otpService.generate(emailOtpDto)
-  }
-
-  @Post('verify-otp')
-  @HttpCode(HttpStatus.OK)
-  verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
-    return this.otpService.verify(verifyOtpDto)
-  }
-
   @Post('signup')
   signup(@Body() createUserDto: CreateUserDto) {
     return this.authService.signup(createUserDto)
@@ -66,5 +54,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   revokeRefreshToken(@User('rtid') refreshTokenId: string) {
     return this.authService.revokeRefreshToken(refreshTokenId)
+  }
+
+  @Post('email-otp')
+  @HttpCode(HttpStatus.OK)
+  emailOtp(@Body() emailOtpDto: EmailOtpDto) {
+    return this.otpService.emailOtp(emailOtpDto)
+  }
+
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.OK)
+  verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+    return this.otpService.verifyOtp(verifyOtpDto)
   }
 }

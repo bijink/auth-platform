@@ -1,2 +1,2 @@
-export * from './extract-token.util'
 export * from './otp.util'
+export * from './token.util'
