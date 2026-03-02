@@ -16,7 +16,12 @@ import { CreateUserDto } from 'src/user/dto'
 import { UserService } from 'src/user/user.service'
 import { v7 as uuidv7 } from 'uuid'
 import authConfig from './config/auth.config'
-import { ChangeEmailDto, ChangePasswordDto, LoginDto } from './dto'
+import {
+  ChangeEmailDto,
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginDto,
+} from './dto'
 import { JwtAccessPayload, JwtRefreshPayload } from './interface'
 import { OtpService } from './service'
 
@@ -125,22 +130,42 @@ export class AuthService {
   }
 
   public async changePassword(email: string, dto: ChangePasswordDto) {
+    // check email is verified or not
     await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
-
+    // check inputed oldPassword matches with the db
     const { password: passwordInDb } =
       await this.usersService.findOneUserByEmail(email, false)
     const pwMatches = await argon.verify(passwordInDb, dto.oldPassword)
     if (!pwMatches) throw new BadRequestException('Old password mismatch')
-
     // generate the password hash
     const hashedNewPassword = await argon.hash(dto.newPassword)
+    // update user password
     await this.prisma.user.update({
       where: { email },
       data: { password: hashedNewPassword },
     })
 
+    return { message: 'Changed password successfully' }
+  }
+
+  public async forgotPassword(dto: ForgotPasswordDto) {
+    // check user exist or not
+    const user = await this.usersService.findOneUserByEmail(dto.email)
+    // check email is verified or not
+    await this.otpService.verifyCode(dto.email, dto.emailVerifiedCode)
+    // generate the password hash
+    const hashedNewPassword = await argon.hash(dto.newPassword)
+    // update user password
+    await this.prisma.user.update({
+      where: { email: dto.email },
+      data: { password: hashedNewPassword },
+    })
+    // generate tokens
+    const tokens = await this.generateTokens(user)
+
     return {
       message: 'Changed password successfully',
+      ...tokens,
     }
   }
 

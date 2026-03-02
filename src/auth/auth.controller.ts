@@ -14,6 +14,7 @@ import {
   ChangeEmailDto,
   ChangePasswordDto,
   EmailOtpDto,
+  ForgotPasswordDto,
   LoginDto,
   VerifyOtpDto,
 } from './dto'
@@ -73,11 +74,16 @@ export class AuthController {
 
   @Patch('change-password')
   @UseGuards(AuthGuard)
-  password(
+  changePassword(
     @User('email') email: string,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(email, changePasswordDto)
+  }
+
+  @Patch('forgot-password')
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto)
   }
 
   @Post('email-otp')
