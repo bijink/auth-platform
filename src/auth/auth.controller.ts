@@ -10,7 +10,13 @@ import {
 import { CreateUserDto } from 'src/user/dto'
 import { AuthService } from './auth.service'
 import { User } from './decorator'
-import { ChangeEmailDto, EmailOtpDto, LoginDto, VerifyOtpDto } from './dto'
+import {
+  ChangeEmailDto,
+  ChangePasswordDto,
+  EmailOtpDto,
+  LoginDto,
+  VerifyOtpDto,
+} from './dto'
 import { AuthGuard, RefreshTokenGuard } from './guard'
 import { OtpService } from './service'
 
@@ -63,6 +69,15 @@ export class AuthController {
     @Body() changeEmailDto: ChangeEmailDto,
   ) {
     return this.authService.changeEmail(oldEmail, changeEmailDto)
+  }
+
+  @Patch('change-password')
+  @UseGuards(AuthGuard)
+  password(
+    @User('email') email: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(email, changePasswordDto)
   }
 
   @Post('email-otp')

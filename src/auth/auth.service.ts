@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -15,7 +16,7 @@ import { CreateUserDto } from 'src/user/dto'
 import { UserService } from 'src/user/user.service'
 import { v7 as uuidv7 } from 'uuid'
 import authConfig from './config/auth.config'
-import { ChangeEmailDto, LoginDto } from './dto'
+import { ChangeEmailDto, ChangePasswordDto, LoginDto } from './dto'
 import { JwtAccessPayload, JwtRefreshPayload } from './interface'
 import { OtpService } from './service'
 
@@ -31,8 +32,8 @@ export class AuthService {
   ) {}
 
   public async signup(createUserDto: CreateUserDto) {
-    const { verificationCode, ...dto } = createUserDto
-    await this.otpService.verifyCode(dto.email, verificationCode)
+    const { emailVerifiedCode, ...dto } = createUserDto
+    await this.otpService.verifyCode(dto.email, emailVerifiedCode)
     const user = await this.usersService.createUser(dto)
     const tokens = await this.generateTokens(user)
     return { ...user, ...tokens }
@@ -99,14 +100,10 @@ export class AuthService {
   }
 
   public async changeEmail(oldEmail: string, dto: ChangeEmailDto) {
-    await this.otpService.verifyCode(
-      oldEmail,
-      dto.oldEmailVerificationCode,
-      true,
-    )
+    await this.otpService.verifyCode(oldEmail, dto.oldEmailVerifiedCode, true)
     await this.otpService.verifyCode(
       dto.newEmail,
-      dto.newEmailVerificationCode,
+      dto.newEmailVerifiedCode,
       false,
     )
     const user = await this.prisma.user.update({
@@ -124,6 +121,26 @@ export class AuthService {
       message: 'Email changed successfully',
       info: 'All access token and refresh token are revoked',
       ...tokens,
+    }
+  }
+
+  public async changePassword(email: string, dto: ChangePasswordDto) {
+    await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
+
+    const { password: passwordInDb } =
+      await this.usersService.findOneUserByEmail(email, false)
+    const pwMatches = await argon.verify(passwordInDb, dto.oldPassword)
+    if (!pwMatches) throw new BadRequestException('Old password mismatch')
+
+    // generate the password hash
+    const hashedNewPassword = await argon.hash(dto.newPassword)
+    await this.prisma.user.update({
+      where: { email },
+      data: { password: hashedNewPassword },
+    })
+
+    return {
+      message: 'Changed password successfully',
     }
   }
 

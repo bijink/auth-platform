@@ -19,5 +19,5 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  verificationCode: string
+  emailVerifiedCode: string
 }

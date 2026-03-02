@@ -28,7 +28,7 @@ export class UserController {
 
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findUser(id)
+    return this.userService.findOneUserByUserId(id)
   }
 
   @Patch(':id')

@@ -7,9 +7,9 @@ export class ChangeEmailDto {
 
   @IsString()
   @IsNotEmpty()
-  oldEmailVerificationCode: string
+  oldEmailVerifiedCode: string
 
   @IsString()
   @IsNotEmpty()
-  newEmailVerificationCode: string
+  newEmailVerifiedCode: string
 }

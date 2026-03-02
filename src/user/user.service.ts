@@ -19,7 +19,7 @@ export class UserService {
   }
 
   async createUser(
-    createUserDto: Omit<CreateUserDto, 'verificationCode'>,
+    createUserDto: Omit<CreateUserDto, 'emailVerifiedCode'>,
     omitPassword = true,
   ) {
     try {
@@ -45,9 +45,18 @@ export class UserService {
     }
   }
 
-  async findUser(id: number, omitPassword = true) {
+  async findOneUserByUserId(id: number, omitPassword = true) {
     const foundUser = await this.prisma.user.findUnique({
       where: { id },
+      omit: { password: omitPassword },
+    })
+    if (!foundUser) throw new NotFoundException('User not found')
+    return foundUser
+  }
+
+  async findOneUserByEmail(email: string, omitPassword = true) {
+    const foundUser = await this.prisma.user.findUnique({
+      where: { email },
       omit: { password: omitPassword },
     })
     if (!foundUser) throw new NotFoundException('User not found')

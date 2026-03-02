@@ -32,9 +32,9 @@ export class OtpService {
     )
 
     const key = this.verifiedEmailRedisKey(verifyOtpDto.email)
-    const verificationCode = uuidv7()
+    const emailVerifiedCode = uuidv7()
     await this.redis.hset(key, {
-      code: verificationCode,
+      code: emailVerifiedCode,
       guarded,
     })
     await this.redis.expire(key, VERIFIED_EMAIL_REDIS_EX)
@@ -42,30 +42,28 @@ export class OtpService {
     return {
       success: 'EmailVerified',
       message: 'Email verified successfully',
-      verificationCode,
+      verifiedCode: emailVerifiedCode,
     }
   }
 
-  public async verifyCode(email: string, code: string, guared = false) {
+  public async verifyCode(email: string, code: string, guarded = false) {
     const key = this.verifiedEmailRedisKey(email)
     const data = await this.redis.hgetall(key)
     if (!data)
-      throw new UnauthorizedException(
-        'Verification code expired or email mismatch',
-      )
+      throw new UnauthorizedException('Verified code expired or email mismatch')
     const isGuarded = Number(data.guarded) ? true : false
-    if (isGuarded !== guared) {
-      if (guared)
+    if (isGuarded !== guarded) {
+      if (guarded)
         throw new UnauthorizedException(
-          `Use '/guarded-email-otp' api instead to send OTP`,
+          `Use '/guarded-email-otp' api (instead) to send OTP`,
         )
       else
         throw new UnauthorizedException(
-          `Use '/email-otp' api instead  to send OTP`,
+          `Use '/email-otp' api (instead)  to send OTP`,
         )
     }
     if (data.code !== code)
-      throw new UnauthorizedException('Verification code mismatch')
+      throw new UnauthorizedException('Verified code mismatch')
     await this.redis.del(key)
     return true
   }
