@@ -15,7 +15,7 @@ import { CreateUserDto } from 'src/user/dto'
 import { UserService } from 'src/user/user.service'
 import { v7 as uuidv7 } from 'uuid'
 import authConfig from './config/auth.config'
-import { LoginDto } from './dto'
+import { ChangeEmailDto, LoginDto } from './dto'
 import { JwtAccessPayload, JwtRefreshPayload } from './interface'
 import { OtpService } from './service'
 
@@ -96,6 +96,35 @@ export class AuthService {
   public async revokeRefreshToken(tokenId: string) {
     await this.prisma.refreshToken.delete({ where: { id: tokenId } })
     return { message: 'Refresh token revoked successfully' }
+  }
+
+  public async changeEmail(oldEmail: string, dto: ChangeEmailDto) {
+    await this.otpService.verifyCode(
+      oldEmail,
+      dto.oldEmailVerificationCode,
+      true,
+    )
+    await this.otpService.verifyCode(
+      dto.newEmail,
+      dto.newEmailVerificationCode,
+      false,
+    )
+    const user = await this.prisma.user.update({
+      where: { email: oldEmail },
+      data: {
+        email: dto.newEmail,
+        tokenVersion: { increment: 1 },
+      },
+    })
+    await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } })
+    const tokens = await this.generateTokens(user)
+    return {
+      oldEmail,
+      newEmail: dto.newEmail,
+      message: 'Email changed successfully',
+      info: 'All access token and refresh token are revoked',
+      ...tokens,
+    }
   }
 
   private async generateTokens(user: User): Promise<{

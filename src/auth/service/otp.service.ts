@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import * as argon from 'argon2'
 import Redis from 'ioredis'
 import { v7 as uuidv7 } from 'uuid'
-import { EmailOtpDto, VerifyOtpDto } from '../dto'
+import { VerifyOtpDto } from '../dto'
 import { generateOtp, redisKey } from '../util'
 
 const OTP_DIGIT_COUNT = 6
@@ -14,8 +14,8 @@ const EMAILED_OTP_REDIS_EX = 180 // 3 minutes
 export class OtpService {
   constructor(@InjectRedis() private readonly redis: Redis) {}
 
-  public async emailOtp(emailOtpDto: EmailOtpDto) {
-    const otp = await this.generateAndCacheOtp(emailOtpDto.email)
+  public async emailOtp(email: string, guarded = false) {
+    const otp = await this.generateAndCacheOtp(email, guarded)
 
     return {
       success: 'OTPEmailed',
@@ -26,11 +26,18 @@ export class OtpService {
   }
 
   public async verifyOtp(verifyOtpDto: VerifyOtpDto) {
-    await this.verifyCachedOtp(verifyOtpDto.email, verifyOtpDto.otp)
+    const { guarded } = await this.verifyCachedOtp(
+      verifyOtpDto.email,
+      verifyOtpDto.otp,
+    )
 
     const key = this.verifiedEmailRedisKey(verifyOtpDto.email)
     const verificationCode = uuidv7()
-    await this.redis.set(key, verificationCode, 'EX', VERIFIED_EMAIL_REDIS_EX)
+    await this.redis.hset(key, {
+      code: verificationCode,
+      guarded,
+    })
+    await this.redis.expire(key, VERIFIED_EMAIL_REDIS_EX)
 
     return {
       success: 'EmailVerified',
@@ -39,34 +46,52 @@ export class OtpService {
     }
   }
 
-  public async verifyCode(email: string, code: string) {
+  public async verifyCode(email: string, code: string, guared = false) {
     const key = this.verifiedEmailRedisKey(email)
-    const storedCode = await this.redis.get(key)
-    if (!storedCode)
+    const data = await this.redis.hgetall(key)
+    if (!data)
       throw new UnauthorizedException(
         'Verification code expired or email mismatch',
       )
-    if (storedCode !== code)
+    const isGuarded = Number(data.guarded) ? true : false
+    if (isGuarded !== guared) {
+      if (guared)
+        throw new UnauthorizedException(
+          `Use '/guarded-email-otp' api instead to send OTP`,
+        )
+      else
+        throw new UnauthorizedException(
+          `Use '/email-otp' api instead  to send OTP`,
+        )
+    }
+    if (data.code !== code)
       throw new UnauthorizedException('Verification code mismatch')
     await this.redis.del(key)
     return true
   }
 
-  private async generateAndCacheOtp(email: string): Promise<string> {
+  private async generateAndCacheOtp(
+    email: string,
+    guarded: boolean,
+  ): Promise<string> {
     const key = this.emailedOtpRedisKey(email)
     // generate and hash otp
     const otp = generateOtp(OTP_DIGIT_COUNT)
     const hashedOtp = await argon.hash(otp)
     // set hashed otp and expire time in redis
-    await this.redis.hmset(key, {
+    await this.redis.hset(key, {
       hash: hashedOtp,
       attempts: 0,
+      guarded: guarded ? 1 : 0, // 1 = true, 0 = false
     })
     await this.redis.expire(key, EMAILED_OTP_REDIS_EX)
     return otp
   }
 
-  private async verifyCachedOtp(email: string, otp: string): Promise<boolean> {
+  private async verifyCachedOtp(
+    email: string,
+    otp: string,
+  ): Promise<{ status: boolean; guarded: number }> {
     const key = this.emailedOtpRedisKey(email)
     // fetch data and check existence
     const data = await this.redis.hgetall(key)
@@ -86,7 +111,8 @@ export class OtpService {
     if (!isValid) throw new UnauthorizedException('Invalid OTP')
     // success: Clean up and persist
     await this.redis.del(key)
-    return true
+
+    return { status: true, guarded: Number(data.guarded) }
   }
 
   private emailedOtpRedisKey(email: string): string {

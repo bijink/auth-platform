@@ -6,12 +6,15 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  UseGuards,
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
 import { Roles } from 'src/auth/decorator'
+import { RolesGuard } from 'src/auth/guard'
 import { ChangeUserRoleDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
+@UseGuards(RolesGuard)
 @Roles(Role.USER)
 @Controller('users')
 export class UserController {

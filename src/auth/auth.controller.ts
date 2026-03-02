@@ -3,17 +3,17 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common'
 import { CreateUserDto } from 'src/user/dto'
 import { AuthService } from './auth.service'
-import { Public, User } from './decorator'
-import { EmailOtpDto, LoginDto, VerifyOtpDto } from './dto'
+import { User } from './decorator'
+import { ChangeEmailDto, EmailOtpDto, LoginDto, VerifyOtpDto } from './dto'
 import { AuthGuard, RefreshTokenGuard } from './guard'
 import { OtpService } from './service'
 
-@Public()
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -56,10 +56,26 @@ export class AuthController {
     return this.authService.revokeRefreshToken(refreshTokenId)
   }
 
+  @Patch('change-email')
+  @UseGuards(AuthGuard)
+  changeEmail(
+    @User('email') oldEmail: string,
+    @Body() changeEmailDto: ChangeEmailDto,
+  ) {
+    return this.authService.changeEmail(oldEmail, changeEmailDto)
+  }
+
   @Post('email-otp')
   @HttpCode(HttpStatus.OK)
   emailOtp(@Body() emailOtpDto: EmailOtpDto) {
-    return this.otpService.emailOtp(emailOtpDto)
+    return this.otpService.emailOtp(emailOtpDto.email)
+  }
+
+  @Post('guarded-email-otp')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  guardedEmailOtp(@User('email') email: string) {
+    return this.otpService.emailOtp(email, true)
   }
 
   @Post('verify-otp')
