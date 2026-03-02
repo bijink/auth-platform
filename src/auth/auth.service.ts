@@ -105,12 +105,12 @@ export class AuthService {
   }
 
   public async changeEmail(oldEmail: string, dto: ChangeEmailDto) {
-    await this.otpService.verifyCode(oldEmail, dto.oldEmailVerifiedCode, true)
     await this.otpService.verifyCode(
       dto.newEmail,
       dto.newEmailVerifiedCode,
       false,
     )
+    await this.otpService.verifyCode(oldEmail, dto.oldEmailVerifiedCode, true)
     const user = await this.prisma.user.update({
       where: { email: oldEmail },
       data: {

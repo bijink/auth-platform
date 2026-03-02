@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common'
 import { CreateUserDto } from 'src/user/dto'
 import { AuthService } from './auth.service'
-import { User } from './decorator'
+import { Public, User } from './decorator'
 import {
   ChangeEmailDto,
   ChangePasswordDto,
@@ -28,27 +28,29 @@ export class AuthController {
     private readonly otpService: OtpService,
   ) {}
 
+  @Public()
   @Post('signup')
   signup(@Body() createUserDto: CreateUserDto) {
     return this.authService.signup(createUserDto)
   }
 
-  @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
+  @Post('login')
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto)
   }
 
-  @Post('logout-all')
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
+  @Post('logout-all')
   logoutAll(@User('sub') userId: number) {
     return this.authService.logoutFromAllDevices(userId)
   }
 
-  @Post('refresh-token')
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
+  @Post('refresh-token')
   refreshToken(
     @User('sub') userId: number,
     @User('rtid') refreshTokenId: string,
@@ -56,15 +58,15 @@ export class AuthController {
     return this.authService.refreshToken(userId, refreshTokenId)
   }
 
-  @Post('revoke-refresh-token')
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
+  @Post('revoke-refresh-token')
   revokeRefreshToken(@User('rtid') refreshTokenId: string) {
     return this.authService.revokeRefreshToken(refreshTokenId)
   }
 
-  @Patch('change-email')
   @UseGuards(AuthGuard)
+  @Patch('change-email')
   changeEmail(
     @User('email') oldEmail: string,
     @Body() changeEmailDto: ChangeEmailDto,
@@ -72,8 +74,8 @@ export class AuthController {
     return this.authService.changeEmail(oldEmail, changeEmailDto)
   }
 
-  @Patch('change-password')
   @UseGuards(AuthGuard)
+  @Patch('change-password')
   changePassword(
     @User('email') email: string,
     @Body() changePasswordDto: ChangePasswordDto,
@@ -81,26 +83,29 @@ export class AuthController {
     return this.authService.changePassword(email, changePasswordDto)
   }
 
+  @Public()
   @Patch('forgot-password')
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto)
   }
 
-  @Post('email-otp')
+  @Public()
   @HttpCode(HttpStatus.OK)
+  @Post('email-otp')
   emailOtp(@Body() emailOtpDto: EmailOtpDto) {
     return this.otpService.emailOtp(emailOtpDto.email)
   }
 
-  @Post('guarded-email-otp')
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
+  @Post('guarded-email-otp')
   guardedEmailOtp(@User('email') email: string) {
     return this.otpService.emailOtp(email, true)
   }
 
-  @Post('verify-otp')
+  @Public()
   @HttpCode(HttpStatus.OK)
+  @Post('verify-otp')
   verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
     return this.otpService.verifyOtp(verifyOtpDto)
   }

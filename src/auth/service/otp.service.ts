@@ -49,17 +49,17 @@ export class OtpService {
   public async verifyCode(email: string, code: string, guarded = false) {
     const key = this.verifiedEmailRedisKey(email)
     const data = await this.redis.hgetall(key)
-    if (!data)
+    if (!data.code)
       throw new UnauthorizedException('Verified code expired or email mismatch')
     const isGuarded = Number(data.guarded) ? true : false
     if (isGuarded !== guarded) {
       if (guarded)
         throw new UnauthorizedException(
-          `Use '/guarded-email-otp' api (instead) to send OTP`,
+          `Email '${email}' verification failed. Please use '/guarded-email-otp' api to send OTP`,
         )
       else
         throw new UnauthorizedException(
-          `Use '/email-otp' api (instead)  to send OTP`,
+          `Email '${email}' verification failed. Please use '/email-otp' api to send OTP`,
         )
     }
     if (data.code !== code)
