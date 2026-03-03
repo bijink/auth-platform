@@ -53,6 +53,8 @@ export class AuthService {
     })
     // if user does not exist, throw exception
     if (!user) throw new NotFoundException('User not found')
+    // check user is not active (deleted)
+    if (user.deleted) throw new ForbiddenException('User inactive')
     // compare password
     const pwMatches = await argon.verify(user.password, loginDto.password)
     // if the password incorrect, throw exception
@@ -86,7 +88,9 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       })
-      if (!user) throw new UnauthorizedException('User not exists')
+      if (!user) throw new NotFoundException('User not exists')
+      // check user is not active (deleted)
+      if (user.deleted) throw new ForbiddenException('User inactive')
       // delete used refresh token from db
       await this.prisma.refreshToken.delete({ where: { id: tokenId } })
       // generate access token and refresh token
@@ -95,7 +99,7 @@ export class AuthService {
       if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException(error)
       }
-      if (error instanceof UnauthorizedException) throw error
+      throw error
     }
   }
 

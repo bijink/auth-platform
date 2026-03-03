@@ -52,7 +52,7 @@ export class RefreshTokenGuard implements CanActivate {
       if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException(error)
       }
-      if (error instanceof UnauthorizedException) throw error
+      throw error
     }
 
     return true

@@ -82,8 +82,8 @@ export class UserService {
   async softDeleteUser(id: number) {
     try {
       const deletedUser = await this.prisma.user.update({
-        data: { deleted: true },
         where: { id },
+        data: { deleted: true },
         omit: { password: true },
       })
       return {

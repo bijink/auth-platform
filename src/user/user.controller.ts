@@ -12,7 +12,6 @@ import { Roles } from 'src/auth/decorator'
 import { ChangeUserRoleDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
-@Roles(Role.USER)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

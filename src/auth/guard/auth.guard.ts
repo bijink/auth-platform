@@ -1,8 +1,10 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
@@ -47,9 +49,11 @@ export class AuthGuard implements CanActivate {
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
-        select: { email: true, role: true, tokenVersion: true },
+        select: { email: true, role: true, tokenVersion: true, deleted: true },
       })
-      if (!user) throw new UnauthorizedException('User not exists')
+      if (!user) throw new NotFoundException('User not exists')
+      // check user is not active (deleted)
+      if (user.deleted) throw new ForbiddenException('User inactive')
 
       if (user.tokenVersion !== payload.version) {
         throw new UnauthorizedException('Token revoked')
@@ -64,7 +68,7 @@ export class AuthGuard implements CanActivate {
       if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException(error)
       }
-      if (error instanceof UnauthorizedException) throw error
+      throw error
     }
 
     return true
