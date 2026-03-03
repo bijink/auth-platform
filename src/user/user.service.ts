@@ -7,12 +7,23 @@ import {
 } from '@nestjs/common'
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
+import { OtpService } from 'src/otp/otp.service'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
+import { TokenService } from 'src/token/token.service'
+import {
+  ChangeUserRoleDto,
+  CreateUserDto,
+  DeleteUserDto,
+  UpdateUserDto,
+} from './dto'
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly otpService: OtpService,
+    private readonly tokenService: TokenService,
+  ) {}
 
   async findAllUsers() {
     return await this.prisma.user.findMany({ omit: { password: true } })
@@ -63,11 +74,11 @@ export class UserService {
     return foundUser
   }
 
-  async updateUser(id: number, updateUserDto: UpdateUserDto) {
+  async updateUser(userId: number, updateUserDto: UpdateUserDto) {
     try {
       return await this.prisma.user.update({
         data: updateUserDto,
-        where: { id },
+        where: { id: userId },
         omit: { password: true },
       })
     } catch (error) {
@@ -79,14 +90,15 @@ export class UserService {
     }
   }
 
-  async softDeleteUser(id: number) {
+  async softDeleteUser(email: string, dto: DeleteUserDto) {
     try {
-      // await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
+      await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
       const deletedUser = await this.prisma.user.update({
-        where: { id },
+        where: { email },
         data: { deleted: true },
         omit: { password: true },
       })
+      await this.tokenService.revokeAllToken(deletedUser.id)
       return {
         id: deletedUser.id,
         status: true,
@@ -99,15 +111,18 @@ export class UserService {
           throw new NotFoundException('User not found')
         }
       }
+      throw error
     }
   }
 
-  async hardDeleteUser(id: number) {
+  async hardDeleteUser(email: string, dto: DeleteUserDto) {
     try {
+      await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
       const deletedUser = await this.prisma.user.delete({
-        where: { id },
+        where: { email },
         omit: { password: true },
       })
+      await this.tokenService.revokeAllToken(deletedUser.id)
       return {
         id: deletedUser.id,
         status: true,

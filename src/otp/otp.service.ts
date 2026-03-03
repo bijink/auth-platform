@@ -2,9 +2,9 @@ import { InjectRedis } from '@nestjs-modules/ioredis'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import * as argon from 'argon2'
 import Redis from 'ioredis'
+import { VerifyOtpDto } from 'src/auth/dto'
 import { v7 as uuidv7 } from 'uuid'
-import { VerifyOtpDto } from '../dto'
-import { generateOtp, redisKey } from '../util'
+import { generateOtp, generateRedisKey } from './util'
 
 const OTP_DIGIT_COUNT = 6
 const VERIFIED_EMAIL_REDIS_EX = 900 // 15 minutes
@@ -114,9 +114,9 @@ export class OtpService {
   }
 
   private emailedOtpRedisKey(email: string): string {
-    return redisKey('otp', 'emailed', email)
+    return generateRedisKey('otp', 'emailed', email)
   }
   private verifiedEmailRedisKey(email: string): string {
-    return redisKey('email', 'verified', email)
+    return generateRedisKey('email', 'verified', email)
   }
 }

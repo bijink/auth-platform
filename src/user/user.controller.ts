@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
 import { Roles, User } from 'src/auth/decorator'
-import { ChangeUserRoleDto, UpdateUserDto } from './dto'
+import { ChangeUserRoleDto, DeleteUserDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
 @Controller('users')
@@ -32,26 +32,32 @@ export class UserController {
     return this.userService.findUserByUserId(id)
   }
 
-  @Patch(':id')
+  @Patch()
   updateUser(
-    @Param('id', ParseIntPipe) id: number,
+    @User('sub') userId: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.updateUser(id, updateUserDto)
+    return this.userService.updateUser(userId, updateUserDto)
   }
 
   @Delete()
-  deleteUser(@User('sub') userId: number) {
-    return this.userService.softDeleteUser(userId)
+  deleteUser(
+    @User('email') email: string,
+    @Body() deleteUserDto: DeleteUserDto,
+  ) {
+    return this.userService.softDeleteUser(email, deleteUserDto)
   }
 
   @Delete('hard-delete')
-  hardDeleteUser(@User('sub') userId: number) {
-    return this.userService.hardDeleteUser(userId)
+  hardDeleteUser(
+    @User('email') email: string,
+    @Body() deleteUserDto: DeleteUserDto,
+  ) {
+    return this.userService.hardDeleteUser(email, deleteUserDto)
   }
 
   @Roles(Role.SUPER_ADMIN)
-  @Patch(':id/role')
+  @Patch(':id/change-role')
   changeUserRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() changeUserRoleDto: ChangeUserRoleDto,
