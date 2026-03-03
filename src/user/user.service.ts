@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -7,20 +8,26 @@ import {
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { CreateUserDto } from './dto/create-user.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
+import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(createUserDto: CreateUserDto) {
+  async findAllUsers() {
+    return await this.prisma.user.findMany({ omit: { password: true } })
+  }
+
+  async createUser(
+    createUserDto: Omit<CreateUserDto, 'emailVerifiedCode'>,
+    omitPassword = true,
+  ) {
     try {
       // generate the password hash
       const hashedPassword = await argon.hash(createUserDto.password)
       const createdUser = await this.prisma.user.create({
         data: { ...createUserDto, password: hashedPassword },
-        omit: { password: true },
+        omit: { password: omitPassword },
       })
       return createdUser
     } catch (error) {
@@ -34,14 +41,23 @@ export class UsersService {
         throw new ConflictException('Invalid data provided')
       }
       // 2. Fallback for everything else (unknown errors, connection issues, etc.)
-      throw new InternalServerErrorException('Failed to create user')
+      throw new InternalServerErrorException(error)
     }
   }
 
-  async findUser(id: number) {
+  async findUserByUserId(id: number, omitPassword = true) {
     const foundUser = await this.prisma.user.findUnique({
       where: { id },
-      omit: { password: true },
+      omit: { password: omitPassword },
+    })
+    if (!foundUser) throw new NotFoundException('User not found')
+    return foundUser
+  }
+
+  async findUserByEmail(email: string, omitPassword = true) {
+    const foundUser = await this.prisma.user.findUnique({
+      where: { email },
+      omit: { password: omitPassword },
     })
     if (!foundUser) throw new NotFoundException('User not found')
     return foundUser
@@ -66,8 +82,8 @@ export class UsersService {
   async softDeleteUser(id: number) {
     try {
       const deletedUser = await this.prisma.user.update({
-        data: { deleted: true },
         where: { id },
+        data: { deleted: true },
         omit: { password: true },
       })
       return {
@@ -102,6 +118,35 @@ export class UsersService {
           throw new NotFoundException('User not found')
         }
       }
+    }
+  }
+
+  async changeUserRole(id: number, changeUserRoleDto: ChangeUserRoleDto) {
+    // check user exists and current role of the user
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { role: true },
+    })
+    if (!user) throw new NotFoundException('User not found')
+    if (user.role === 'SUPER_ADMIN')
+      throw new ForbiddenException('Cannot change role of a SUPER_ADMIN')
+    if (user.role === changeUserRoleDto.role)
+      throw new ForbiddenException(
+        `User role is '${changeUserRoleDto.role}' already`,
+      )
+    // change user role
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        role: changeUserRoleDto.role,
+        tokenVersion: { increment: 1 },
+      },
+      select: { id: true, role: true, email: true },
+    })
+
+    return {
+      ...updatedUser,
+      message: `User role changed from '${user.role}' to '${changeUserRoleDto.role}'`,
     }
   }
 }

@@ -15,16 +15,36 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deleted   Boolean  @default(false)
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deleted      Boolean  @default(false)
+  role         Role     @default(USER)
+  tokenVersion Int      @default(1)
 
   email    String @unique
   password String
 
-  firstName String?
-  lastName  String?
+  firstName     String?
+  lastName      String?
+  refreshTokens RefreshToken[]
 
   @@map("users")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+model RefreshToken {
+  id        String   @id @db.Uuid
+  userId    Int      @map("user_id")
+  token     String   @map("token")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }

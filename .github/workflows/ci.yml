@@ -29,6 +29,9 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm prisma generate
 
+      - name: Build
+        run: pnpm build
+
       - name: Prettier check
         run: pnpm format:check
 
