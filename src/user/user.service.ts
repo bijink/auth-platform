@@ -12,7 +12,7 @@ import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAllUsers() {
     return await this.prisma.user.findMany({ omit: { password: true } })
@@ -81,6 +81,7 @@ export class UserService {
 
   async softDeleteUser(id: number) {
     try {
+      // await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
       const deletedUser = await this.prisma.user.update({
         where: { id },
         data: { deleted: true },

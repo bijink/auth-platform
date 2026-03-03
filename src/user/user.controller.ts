@@ -8,7 +8,7 @@ import {
   Patch,
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
-import { Roles } from 'src/auth/decorator'
+import { Roles, User } from 'src/auth/decorator'
 import { ChangeUserRoleDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
@@ -20,6 +20,11 @@ export class UserController {
   @Get()
   getAllUsers() {
     return this.userService.findAllUsers()
+  }
+
+  @Get('me')
+  getMe(@User('sub') userId: number) {
+    return this.userService.findUserByUserId(userId)
   }
 
   @Get(':id')
@@ -35,14 +40,14 @@ export class UserController {
     return this.userService.updateUser(id, updateUserDto)
   }
 
-  @Delete(':id')
-  deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.softDeleteUser(id)
+  @Delete()
+  deleteUser(@User('sub') userId: number) {
+    return this.userService.softDeleteUser(userId)
   }
 
-  @Delete('hard-delete/:id')
-  hardDeleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.hardDeleteUser(id)
+  @Delete('hard-delete')
+  hardDeleteUser(@User('sub') userId: number) {
+    return this.userService.hardDeleteUser(userId)
   }
 
   @Roles(Role.SUPER_ADMIN)
