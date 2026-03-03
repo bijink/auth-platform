@@ -45,7 +45,7 @@ export class UserService {
     }
   }
 
-  async findOneUserByUserId(id: number, omitPassword = true) {
+  async findUserByUserId(id: number, omitPassword = true) {
     const foundUser = await this.prisma.user.findUnique({
       where: { id },
       omit: { password: omitPassword },
@@ -54,7 +54,7 @@ export class UserService {
     return foundUser
   }
 
-  async findOneUserByEmail(email: string, omitPassword = true) {
+  async findUserByEmail(email: string, omitPassword = true) {
     const foundUser = await this.prisma.user.findUnique({
       where: { email },
       omit: { password: omitPassword },

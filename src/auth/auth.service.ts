@@ -137,8 +137,10 @@ export class AuthService {
     // check email is verified or not
     await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
     // check inputed oldPassword matches with the db
-    const { password: passwordInDb } =
-      await this.usersService.findOneUserByEmail(email, false)
+    const { password: passwordInDb } = await this.usersService.findUserByEmail(
+      email,
+      false,
+    )
     const pwMatches = await argon.verify(passwordInDb, dto.oldPassword)
     if (!pwMatches) throw new BadRequestException('Old password mismatch')
     // generate the password hash
@@ -154,7 +156,7 @@ export class AuthService {
 
   public async forgotPassword(dto: ForgotPasswordDto) {
     // check user exist or not
-    const user = await this.usersService.findOneUserByEmail(dto.email)
+    const user = await this.usersService.findUserByEmail(dto.email)
     // check email is verified or not
     await this.otpService.verifyCode(dto.email, dto.emailVerifiedCode)
     // generate the password hash

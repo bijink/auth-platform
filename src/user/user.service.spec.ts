@@ -1,16 +1,18 @@
 import {
   ConflictException,
+  ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { Prisma } from 'generated/prisma/client'
+import { Prisma, Role } from 'generated/prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { CreateUserDto, UpdateUserDto } from './dto'
+import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
 const mockPrismaService = {
   user: {
+    findMany: jest.fn(),
     create: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
@@ -43,9 +45,49 @@ describe('UsersService', () => {
     expect(service).toBeDefined()
   })
 
+  describe('findAllUsers', () => {
+    it('should return all users without passwords', async () => {
+      const expectedRes = [
+        {
+          id: 1,
+          email: 'user1@email.com',
+          firstName: 'User',
+          lastName: 'One',
+        },
+        {
+          id: 2,
+          email: 'user2@email.com',
+          firstName: 'User',
+          lastName: 'Two',
+        },
+      ]
+
+      prismaService.user.findMany.mockResolvedValue(expectedRes)
+
+      const result = await service.findAllUsers()
+
+      expect(result).toEqual(expectedRes)
+
+      expect(prismaService.user.findMany).toHaveBeenCalledWith({
+        omit: { password: true },
+      })
+    })
+
+    it('should return empty array when no users exist', async () => {
+      prismaService.user.findMany.mockResolvedValue([])
+
+      const result = await service.findAllUsers()
+
+      expect(result).toEqual([])
+      expect(prismaService.user.findMany).toHaveBeenCalledWith({
+        omit: { password: true },
+      })
+    })
+  })
+
   describe('createUser', () => {
     it('should create and return user without password', async () => {
-      const dto: CreateUserDto = {
+      const dto: Omit<CreateUserDto, 'emailVerifiedCode'> = {
         email: 'test@email.com',
         password: 'pass1234',
         firstName: 'Test',
@@ -76,7 +118,7 @@ describe('UsersService', () => {
     })
 
     it('should throw ConflictException on unique constraint violation (P2002)', async () => {
-      const dto: CreateUserDto = {
+      const dto: Omit<CreateUserDto, 'emailVerifiedCode'> = {
         email: 'existing@email.com',
         password: 'pass1234',
       }
@@ -97,7 +139,7 @@ describe('UsersService', () => {
     })
 
     it('should throw ConflictException on other Prisma known errors', async () => {
-      const dto: CreateUserDto = {
+      const dto: Omit<CreateUserDto, 'emailVerifiedCode'> = {
         email: 'test@email.com',
         password: 'pass1234',
       }
@@ -115,7 +157,7 @@ describe('UsersService', () => {
     })
 
     it('should throw InternalServerErrorException on unknown errors', async () => {
-      const dto: CreateUserDto = {
+      const dto: Omit<CreateUserDto, 'emailVerifiedCode'> = {
         email: 'test@email.com',
         password: 'pass1234',
       }
@@ -126,13 +168,11 @@ describe('UsersService', () => {
       await expect(service.createUser(dto)).rejects.toThrow(
         InternalServerErrorException,
       )
-      await expect(service.createUser(dto)).rejects.toThrow(
-        'Failed to create user',
-      )
+      await expect(service.createUser(dto)).rejects.toThrow(error)
     })
   })
 
-  describe('findUser', () => {
+  describe('findUserByUserId', () => {
     it('should return user when found', async () => {
       const userId = 1
       const expectedRes = {
@@ -144,7 +184,7 @@ describe('UsersService', () => {
 
       prismaService.user.findUnique.mockResolvedValue(expectedRes)
 
-      const result = await service.findUser(userId)
+      const result = await service.findUserByUserId(userId)
 
       expect(result).toEqual(expectedRes)
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
@@ -158,8 +198,47 @@ describe('UsersService', () => {
 
       prismaService.user.findUnique.mockResolvedValue(null)
 
-      await expect(service.findUser(userId)).rejects.toThrow(NotFoundException)
-      await expect(service.findUser(userId)).rejects.toThrow('User not found')
+      await expect(service.findUserByUserId(userId)).rejects.toThrow(
+        NotFoundException,
+      )
+      await expect(service.findUserByUserId(userId)).rejects.toThrow(
+        'User not found',
+      )
+    })
+  })
+
+  describe('findUserByEmail', () => {
+    it('should return user when found', async () => {
+      const email = 'test@email.com'
+      const expectedRes = {
+        id: 1,
+        email: 'test@email.com',
+        firstName: 'Test',
+        lastName: 'User',
+      }
+
+      prismaService.user.findUnique.mockResolvedValue(expectedRes)
+
+      const result = await service.findUserByEmail(email)
+
+      expect(result).toEqual(expectedRes)
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email },
+        omit: { password: true },
+      })
+    })
+
+    it('should throw NotFoundException when user not found', async () => {
+      const userId = 999
+
+      prismaService.user.findUnique.mockResolvedValue(null)
+
+      await expect(service.findUserByUserId(userId)).rejects.toThrow(
+        NotFoundException,
+      )
+      await expect(service.findUserByUserId(userId)).rejects.toThrow(
+        'User not found',
+      )
     })
   })
 
@@ -294,6 +373,91 @@ describe('UsersService', () => {
       )
       await expect(service.hardDeleteUser(userId)).rejects.toThrow(
         'User not found',
+      )
+    })
+  })
+
+  describe('changeUserRole', () => {
+    const dto: ChangeUserRoleDto = {
+      role: Role.ADMIN,
+    }
+    it('should change user role and increment tokenVersion', async () => {
+      const userId = 1
+
+      prismaService.user.findUnique.mockResolvedValue({
+        role: 'USER',
+      })
+
+      prismaService.user.update.mockResolvedValue({
+        id: userId,
+        role: 'ADMIN',
+        email: 'test@email.com',
+      })
+
+      const result = await service.changeUserRole(userId, dto)
+
+      expect(result).toEqual({
+        id: userId,
+        role: 'ADMIN',
+        email: 'test@email.com',
+        message: "User role changed from 'USER' to 'ADMIN'",
+      })
+
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+        select: { role: true },
+      })
+
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: {
+          role: 'ADMIN',
+          tokenVersion: { increment: 1 },
+        },
+        select: { id: true, role: true, email: true },
+      })
+    })
+
+    it('should throw NotFoundException if user does not exist', async () => {
+      const userId = 999
+
+      prismaService.user.findUnique.mockResolvedValue(null)
+
+      await expect(service.changeUserRole(userId, dto)).rejects.toThrow(
+        NotFoundException,
+      )
+      await expect(service.changeUserRole(userId, dto)).rejects.toThrow(
+        'User not found',
+      )
+    })
+
+    it('should throw ForbiddenException if user is SUPER_ADMIN', async () => {
+      const userId = 1
+
+      prismaService.user.findUnique.mockResolvedValue({
+        role: 'SUPER_ADMIN',
+      })
+
+      await expect(service.changeUserRole(userId, dto)).rejects.toThrow(
+        ForbiddenException,
+      )
+      await expect(service.changeUserRole(userId, dto)).rejects.toThrow(
+        'Cannot change role of a SUPER_ADMIN',
+      )
+    })
+
+    it('should throw ForbiddenException if role is already the same', async () => {
+      const userId = 1
+
+      prismaService.user.findUnique.mockResolvedValue({
+        role: 'ADMIN',
+      })
+
+      await expect(service.changeUserRole(userId, dto)).rejects.toThrow(
+        ForbiddenException,
+      )
+      await expect(service.changeUserRole(userId, dto)).rejects.toThrow(
+        "User role is 'ADMIN' already",
       )
     })
   })
