@@ -103,5 +103,11 @@
     "transformIgnorePatterns": [
       "/node_modules/(?!uuid)/"
     ]
+  },
+  "lint-staged": {
+    "{src,apps,libs,test}/**/*.ts": [
+      "prettier --write",
+      "eslint --fix --max-warnings=0"
+    ]
   }
 }
