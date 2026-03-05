@@ -20,7 +20,7 @@ import {
   LoginDto,
   VerifyOtpDto,
 } from './dto'
-import { AuthGuard, RefreshTokenGuard } from './guard'
+import { RefreshTokenGuard } from './guard'
 
 @Controller('auth')
 export class AuthController {
@@ -43,7 +43,6 @@ export class AuthController {
     return this.authService.login(loginDto)
   }
 
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout-all')
   logoutAll(@User('sub') userId: number) {
@@ -69,7 +68,6 @@ export class AuthController {
     return this.tokenService.revokeRefreshToken(refreshTokenId)
   }
 
-  @UseGuards(AuthGuard)
   @Patch('change-email')
   changeEmail(
     @User('email') oldEmail: string,
@@ -78,7 +76,6 @@ export class AuthController {
     return this.authService.changeEmail(oldEmail, changeEmailDto)
   }
 
-  @UseGuards(AuthGuard)
   @Patch('change-password')
   changePassword(
     @User('email') email: string,
@@ -100,7 +97,6 @@ export class AuthController {
     return this.otpService.emailOtp(emailOtpDto.email)
   }
 
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('guarded-email-otp')
   guardedEmailOtp(@User('email') email: string) {
