@@ -6,8 +6,15 @@ import {
 } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { Prisma, Role } from 'generated/prisma/client'
+import { OtpService } from 'src/otp/otp.service'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { ChangeUserRoleDto, CreateUserDto, UpdateUserDto } from './dto'
+import { TokenService } from 'src/token/token.service'
+import {
+  ChangeUserRoleDto,
+  CreateUserDto,
+  UpdateUserDto,
+  type DeleteUserDto,
+} from './dto'
 import { UserService } from './user.service'
 
 const mockPrismaService = {
@@ -18,6 +25,14 @@ const mockPrismaService = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+}
+
+const mockOtpService = {
+  verifyCode: jest.fn(),
+}
+
+const mockTokenService = {
+  revokeAllToken: jest.fn(),
 }
 
 describe('UsersService', () => {
@@ -33,6 +48,14 @@ describe('UsersService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: OtpService,
+          useValue: mockOtpService,
+        },
+        {
+          provide: TokenService,
+          useValue: mockTokenService,
         },
       ],
     }).compile()
@@ -287,33 +310,34 @@ describe('UsersService', () => {
   })
 
   describe('softDeleteUser', () => {
+    const userEmail = 'test@email.com'
+    const deleteUserDto: DeleteUserDto = {
+      emailVerifiedCode: 'verification-code',
+    }
     it('should soft delete and return status', async () => {
-      const userId = 1
       const expectedRes = {
-        id: userId,
-        email: 'test@email.com',
+        id: 1,
         deleted: true,
       }
 
       prismaService.user.update.mockResolvedValue(expectedRes)
 
-      const result = await service.softDeleteUser(userId)
+      const result = await service.softDeleteUser(userEmail, deleteUserDto)
 
       expect(result).toEqual({
-        id: userId,
+        id: expectedRes.id,
         status: true,
-        deleted: true,
+        deleted: expectedRes.deleted,
         message: 'Soft deleted user',
       })
       expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { email: userEmail },
         data: { deleted: true },
-        where: { id: userId },
         omit: { password: true },
       })
     })
 
     it('should throw NotFoundException when user not found (P2025)', async () => {
-      const userId = 999
       const error = new Prisma.PrismaClientKnownRequestError(
         'Record not found',
         {
@@ -324,16 +348,20 @@ describe('UsersService', () => {
 
       prismaService.user.update.mockRejectedValue(error)
 
-      await expect(service.softDeleteUser(userId)).rejects.toThrow(
-        NotFoundException,
-      )
-      await expect(service.softDeleteUser(userId)).rejects.toThrow(
-        'User not found',
-      )
+      await expect(
+        service.softDeleteUser(userEmail, deleteUserDto),
+      ).rejects.toThrow(NotFoundException)
+      await expect(
+        service.softDeleteUser(userEmail, deleteUserDto),
+      ).rejects.toThrow('User not found')
     })
   })
 
   describe('hardDeleteUser', () => {
+    const userEmail = 'test@email.com'
+    const deleteUserDto: DeleteUserDto = {
+      emailVerifiedCode: 'verification-code',
+    }
     it('should permanently delete and return status', async () => {
       const userId = 1
       const expectedRes = {
@@ -343,7 +371,7 @@ describe('UsersService', () => {
 
       prismaService.user.delete.mockResolvedValue(expectedRes)
 
-      const result = await service.hardDeleteUser(userId)
+      const result = await service.hardDeleteUser(userEmail, deleteUserDto)
 
       expect(result).toEqual({
         id: userId,
@@ -351,13 +379,12 @@ describe('UsersService', () => {
         message: 'User premanently deleted',
       })
       expect(prismaService.user.delete).toHaveBeenCalledWith({
-        where: { id: userId },
+        where: { email: userEmail },
         omit: { password: true },
       })
     })
 
     it('should throw NotFoundException when user not found (P2025)', async () => {
-      const userId = 999
       const error = new Prisma.PrismaClientKnownRequestError(
         'Record not found',
         {
@@ -368,12 +395,12 @@ describe('UsersService', () => {
 
       prismaService.user.delete.mockRejectedValue(error)
 
-      await expect(service.hardDeleteUser(userId)).rejects.toThrow(
-        NotFoundException,
-      )
-      await expect(service.hardDeleteUser(userId)).rejects.toThrow(
-        'User not found',
-      )
+      await expect(
+        service.hardDeleteUser(userEmail, deleteUserDto),
+      ).rejects.toThrow(NotFoundException)
+      await expect(
+        service.hardDeleteUser(userEmail, deleteUserDto),
+      ).rejects.toThrow('User not found')
     })
   })
 

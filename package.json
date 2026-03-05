@@ -99,6 +99,9 @@
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/../src/$1",
       "^generated/(.*)$": "<rootDir>/../dist/generated/$1"
-    }
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!uuid)/"
+    ]
   }
 }
