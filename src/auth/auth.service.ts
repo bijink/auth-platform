@@ -1,46 +1,36 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common'
-import type { ConfigType } from '@nestjs/config'
-import { JsonWebTokenError, JwtService, JwtSignOptions } from '@nestjs/jwt'
 import * as argon from 'argon2'
-import { Prisma, User } from 'generated/prisma/client'
+import { OtpService } from 'src/otp/otp.service'
 import { PrismaService } from 'src/prisma/prisma.service'
+import { TokenService } from 'src/token/token.service'
 import { CreateUserDto } from 'src/user/dto'
 import { UserService } from 'src/user/user.service'
-import { v7 as uuidv7 } from 'uuid'
-import authConfig from './config/auth.config'
 import {
   ChangeEmailDto,
   ChangePasswordDto,
   ForgotPasswordDto,
   LoginDto,
 } from './dto'
-import { JwtAccessPayload, JwtRefreshPayload } from './interface'
-import { OtpService } from './service'
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UserService,
-    private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
-    @Inject(authConfig.KEY)
-    private readonly authConfiguration: ConfigType<typeof authConfig>,
     private readonly otpService: OtpService,
+    private readonly tokenService: TokenService,
   ) {}
 
   public async signup(createUserDto: CreateUserDto) {
     const { emailVerifiedCode, ...dto } = createUserDto
     await this.otpService.verifyCode(dto.email, emailVerifiedCode)
     const user = await this.usersService.createUser(dto)
-    const tokens = await this.generateTokens(user)
+    const tokens = await this.tokenService.generateToken(user)
     return { ...user, ...tokens }
   }
 
@@ -60,52 +50,14 @@ export class AuthService {
     // if the password incorrect, throw exception
     if (!pwMatches) throw new ForbiddenException('Incorrect password')
     // send back the user
-    return this.generateTokens(user)
+    return this.tokenService.generateToken(user)
   }
 
   public async logoutFromAllDevices(userId: number) {
-    try {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          tokenVersion: { increment: 1 },
-        },
-      })
-      await this.prisma.refreshToken.deleteMany({ where: { userId } })
-      return { id: userId, message: 'User logged out from all devices' }
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('User not exists')
-        }
-      }
+    await this.tokenService.revokeAllToken(userId)
+    return {
+      message: 'User logged out from all devices',
     }
-  }
-
-  public async refreshToken(userId: number, tokenId: string) {
-    try {
-      // find user from db using userId
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-      })
-      if (!user) throw new NotFoundException('User not exists')
-      // check user is not active (deleted)
-      if (user.deleted) throw new ForbiddenException('User inactive')
-      // delete used refresh token from db
-      await this.prisma.refreshToken.delete({ where: { id: tokenId } })
-      // generate access token and refresh token
-      return this.generateTokens(user)
-    } catch (error) {
-      if (error instanceof JsonWebTokenError) {
-        throw new UnauthorizedException(error)
-      }
-      throw error
-    }
-  }
-
-  public async revokeRefreshToken(tokenId: string) {
-    await this.prisma.refreshToken.delete({ where: { id: tokenId } })
-    return { message: 'Refresh token revoked successfully' }
   }
 
   public async changeEmail(oldEmail: string, dto: ChangeEmailDto) {
@@ -123,7 +75,7 @@ export class AuthService {
       },
     })
     await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } })
-    const tokens = await this.generateTokens(user)
+    const tokens = await this.tokenService.generateToken(user)
     return {
       oldEmail,
       newEmail: dto.newEmail,
@@ -167,67 +119,11 @@ export class AuthService {
       data: { password: hashedNewPassword },
     })
     // generate tokens
-    const tokens = await this.generateTokens(user)
+    const tokens = await this.tokenService.generateToken(user)
 
     return {
       message: 'Changed password successfully',
       ...tokens,
     }
-  }
-
-  private async generateTokens(user: User): Promise<{
-    accessToken: string
-    refreshToken: string
-  }> {
-    try {
-      // generate access token
-      const accessToken = await this.signToken<Partial<JwtAccessPayload>>(
-        user.id,
-        {
-          secret: this.authConfiguration.secret,
-          expiresIn: this.authConfiguration.expiresIn,
-        },
-        {
-          email: user.email,
-          version: user.tokenVersion,
-        },
-      )
-
-      // create uuid for refresh token
-      const refreshTokenId = uuidv7()
-      // generate refresh token
-      const refreshToken = await this.signToken<Partial<JwtRefreshPayload>>(
-        user.id,
-        {
-          secret: this.authConfiguration.refreshSecret,
-          expiresIn: this.authConfiguration.refreshExpiresIn,
-        },
-        {
-          rtid: refreshTokenId,
-        },
-      )
-      // hash refresh token
-      const hashedRefreshToken = await argon.hash(refreshToken)
-      // store refresh token in db
-      await this.prisma.refreshToken.create({
-        data: {
-          id: refreshTokenId,
-          token: hashedRefreshToken,
-          userId: user.id,
-        },
-      })
-      // return access and refresh tokens
-      return { accessToken, refreshToken }
-    } catch (error) {
-      throw new InternalServerErrorException(error)
-    }
-  }
-
-  private async signToken<T>(
-    sub: number,
-    options: JwtSignOptions,
-    payload?: T,
-  ) {
-    return await this.jwtService.signAsync({ sub, ...payload }, options)
   }
 }

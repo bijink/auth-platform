@@ -8,8 +8,8 @@ import {
   Patch,
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
-import { Roles } from 'src/auth/decorator'
-import { ChangeUserRoleDto, UpdateUserDto } from './dto'
+import { Roles, User } from 'src/auth/decorator'
+import { ChangeUserRoleDto, DeleteUserDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
 @Controller('users')
@@ -22,31 +22,42 @@ export class UserController {
     return this.userService.findAllUsers()
   }
 
+  @Get('me')
+  getMe(@User('sub') userId: number) {
+    return this.userService.findUserByUserId(userId)
+  }
+
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findUserByUserId(id)
   }
 
-  @Patch(':id')
+  @Patch()
   updateUser(
-    @Param('id', ParseIntPipe) id: number,
+    @User('sub') userId: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.updateUser(id, updateUserDto)
+    return this.userService.updateUser(userId, updateUserDto)
   }
 
-  @Delete(':id')
-  deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.softDeleteUser(id)
+  @Delete()
+  deleteUser(
+    @User('email') email: string,
+    @Body() deleteUserDto: DeleteUserDto,
+  ) {
+    return this.userService.softDeleteUser(email, deleteUserDto)
   }
 
-  @Delete('hard-delete/:id')
-  hardDeleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.hardDeleteUser(id)
+  @Delete('hard-delete')
+  hardDeleteUser(
+    @User('email') email: string,
+    @Body() deleteUserDto: DeleteUserDto,
+  ) {
+    return this.userService.hardDeleteUser(email, deleteUserDto)
   }
 
   @Roles(Role.SUPER_ADMIN)
-  @Patch(':id/role')
+  @Patch(':id/change-role')
   changeUserRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() changeUserRoleDto: ChangeUserRoleDto,

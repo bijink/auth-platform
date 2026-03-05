@@ -1,4 +1,4 @@
-export function redisKey(
+export function generateRedisKey(
   domain: string,
   resource: string,
   identifier: string,

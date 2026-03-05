@@ -1,7 +1,7 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { Role } from 'generated/prisma/enums'
-import { ChangeUserRoleDto } from './dto'
+import { ChangeUserRoleDto, DeleteUserDto } from './dto'
 import { UserController } from './user.controller'
 import { UserService } from './user.service'
 
@@ -119,13 +119,23 @@ describe('UsersController', () => {
   })
 
   describe('deleteUser (soft)', () => {
+    const userEmail: string = 'test@email.com'
+    const deleteUserDto: DeleteUserDto = {
+      emailVerifiedCode: 'verification-code',
+    }
+
     it('return delete status', async () => {
       const expectedRes = { id: 1 }
 
       userService.softDeleteUser.mockResolvedValue(expectedRes)
 
-      await expect(controller.deleteUser(1)).resolves.toBe(expectedRes)
-      expect(userService.softDeleteUser).toHaveBeenCalledWith(1)
+      await expect(
+        controller.deleteUser(userEmail, deleteUserDto),
+      ).resolves.toBe(expectedRes)
+      expect(userService.softDeleteUser).toHaveBeenCalledWith(
+        userEmail,
+        deleteUserDto,
+      )
     })
 
     it('propagates HttpException from service', async () => {
@@ -133,18 +143,30 @@ describe('UsersController', () => {
 
       userService.softDeleteUser.mockRejectedValue(expectedErr)
 
-      await expect(controller.deleteUser(1)).rejects.toBe(expectedErr)
+      await expect(
+        controller.deleteUser(userEmail, deleteUserDto),
+      ).rejects.toBe(expectedErr)
     })
   })
 
   describe('deleteUser (hard)', () => {
+    const userEmail: string = 'test@email.com'
+    const deleteUserDto: DeleteUserDto = {
+      emailVerifiedCode: 'verification-code',
+    }
+
     it('return delete status', async () => {
       const expectedRes = { id: 1 }
 
       userService.hardDeleteUser.mockResolvedValue(expectedRes)
 
-      await expect(controller.hardDeleteUser(1)).resolves.toBe(expectedRes)
-      expect(userService.hardDeleteUser).toHaveBeenCalledWith(1)
+      await expect(
+        controller.hardDeleteUser(userEmail, deleteUserDto),
+      ).resolves.toBe(expectedRes)
+      expect(userService.hardDeleteUser).toHaveBeenCalledWith(
+        userEmail,
+        deleteUserDto,
+      )
     })
 
     it('propagates HttpException from service', async () => {
@@ -152,7 +174,9 @@ describe('UsersController', () => {
 
       userService.hardDeleteUser.mockRejectedValue(expectedErr)
 
-      await expect(controller.hardDeleteUser(1)).rejects.toBe(expectedErr)
+      await expect(
+        controller.hardDeleteUser(userEmail, deleteUserDto),
+      ).rejects.toBe(expectedErr)
     })
   })
 

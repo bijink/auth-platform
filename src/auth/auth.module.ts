@@ -1,24 +1,17 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
-import { JwtModule } from '@nestjs/jwt'
+import { OtpModule } from 'src/otp/otp.module'
+import { TokenModule } from 'src/token/token.module'
 import { UserModule } from 'src/user/user.module'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
-import authConfig from './config/auth.config'
 import { AuthGuard, RolesGuard } from './guard'
-import { OtpService } from './service'
 
 @Module({
-  imports: [
-    UserModule,
-    ConfigModule.forFeature(authConfig),
-    JwtModule.registerAsync(authConfig.asProvider()),
-  ],
+  imports: [UserModule, TokenModule, OtpModule],
   controllers: [AuthController],
   providers: [
     AuthService,
-    OtpService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

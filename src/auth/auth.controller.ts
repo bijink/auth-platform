@@ -7,6 +7,8 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
+import { OtpService } from 'src/otp/otp.service'
+import { TokenService } from 'src/token/token.service'
 import { CreateUserDto } from 'src/user/dto'
 import { AuthService } from './auth.service'
 import { Public, User } from './decorator'
@@ -18,14 +20,14 @@ import {
   LoginDto,
   VerifyOtpDto,
 } from './dto'
-import { AuthGuard, RefreshTokenGuard } from './guard'
-import { OtpService } from './service'
+import { RefreshTokenGuard } from './guard'
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly otpService: OtpService,
+    private readonly tokenService: TokenService,
   ) {}
 
   @Public()
@@ -41,13 +43,13 @@ export class AuthController {
     return this.authService.login(loginDto)
   }
 
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout-all')
   logoutAll(@User('sub') userId: number) {
     return this.authService.logoutFromAllDevices(userId)
   }
 
+  @Public()
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
   @Post('refresh-token')
@@ -55,17 +57,17 @@ export class AuthController {
     @User('sub') userId: number,
     @User('rtid') refreshTokenId: string,
   ) {
-    return this.authService.refreshToken(userId, refreshTokenId)
+    return this.tokenService.refreshToken(userId, refreshTokenId)
   }
 
+  @Public()
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
   @Post('revoke-refresh-token')
   revokeRefreshToken(@User('rtid') refreshTokenId: string) {
-    return this.authService.revokeRefreshToken(refreshTokenId)
+    return this.tokenService.revokeRefreshToken(refreshTokenId)
   }
 
-  @UseGuards(AuthGuard)
   @Patch('change-email')
   changeEmail(
     @User('email') oldEmail: string,
@@ -74,7 +76,6 @@ export class AuthController {
     return this.authService.changeEmail(oldEmail, changeEmailDto)
   }
 
-  @UseGuards(AuthGuard)
   @Patch('change-password')
   changePassword(
     @User('email') email: string,
@@ -96,7 +97,6 @@ export class AuthController {
     return this.otpService.emailOtp(emailOtpDto.email)
   }
 
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('guarded-email-otp')
   guardedEmailOtp(@User('email') email: string) {
