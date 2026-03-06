@@ -1,0 +1,46 @@
+services:
+  prod-api:
+    build:
+      context: .
+      target: production
+    container_name: prod_api
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env.production
+    depends_on:
+      prod-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - infra_net
+  prod-db:
+    image: postgres:17-alpine
+    container_name: prod_db
+    env_file:
+      - .env.production
+    volumes:
+      - prod_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - infra_net
+  prod-redis:
+    image: redis:7-alpine
+    container_name: prod_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - prod_redis_data:/data
+    restart: unless-stopped
+    networks:
+      - infra_net
+volumes:
+  prod_db_data:
+  prod_redis_data:
+networks:
+  infra_net:
+    driver: bridge

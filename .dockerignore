@@ -1,8 +1,34 @@
+# Node
 node_modules
 .pnpm-store
+
+# Build output
 dist
+
+# Tests
+coverage
+
+# Dotenv
+.env*
+
+# Git
 .git
 .gitignore
-.env
-Dockerfile
-docker-compose.yml
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# IDE / OS junk
+.vscode
+.DS_Store
+
+# Configurations
+.prettierrc
+eslint.config.*
+commitlint.config.*
+
+# Others
+.github
+.husky
+README.md

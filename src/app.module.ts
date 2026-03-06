@@ -14,6 +14,9 @@ import { UserModule } from './user/user.module'
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: envValidation,
+      envFilePath: process.env.NODE_ENV
+        ? `.env.${process.env.NODE_ENV}`
+        : '.env',
     }),
     PrismaModule,
     UserModule,

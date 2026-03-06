@@ -1,25 +1,33 @@
-# ---------- Build stage ----------
-FROM node:22-alpine AS builder
-
+# Base
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
+# Dependencies
+FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install
+# To run postinstall prisma folder needed
+COPY prisma ./prisma
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
+# Development stage
+FROM deps AS development
 COPY . .
-RUN pnpm run build
+CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm start:dev"]
 
-# ---------- Production stage ----------
-FROM node:22-alpine
+# Build stage
+FROM deps AS build
+COPY . .
+RUN pnpm build
 
+# Production stage
+FROM node:22-alpine AS production
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --prod
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-
-EXPOSE 3000
-
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
+CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm start:prod"]

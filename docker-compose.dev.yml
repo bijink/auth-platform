@@ -1,45 +1,53 @@
 services:
+  dev-api:
+    build:
+      context: .
+      target: development
+    container_name: dev_api
+    ports:
+      - '3001:3000'
+    env_file:
+      - .env.development
+    depends_on:
+      dev-db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./generated:/app/generated
+      - dev_node_modules:/app/node_modules # Prevents local node_modules from overwriting container's
+    networks:
+      - infra_net
   dev-db:
     image: postgres:17-alpine
-    container_name: auth_dev_db
+    container_name: dev_db
     ports:
-      - '5434:5432'
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: auth_dev
+      - '5431:5432'
+    env_file:
+      - .env.development
     volumes:
       - dev_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - infra_net
-
-  test-db:
-    image: postgres:17-alpine
-    container_name: auth_test_db
-    ports:
-      - '5435:5432'
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: auth_test
-    volumes:
-      - test_db_data:/var/lib/postgresql/data
-    networks:
-      - infra_net
-
-  redis:
+  dev-redis:
     image: redis:7-alpine
-    container_name: auth_redis
+    container_name: dev_redis
     command: redis-server --appendonly yes
+    volumes:
+      - dev_redis_data:/data
     ports:
-      - '6379:6379'
+      - '6378:6379'
     networks:
       - infra_net
-
 volumes:
   dev_db_data:
-  test_db_data:
-
+  dev_redis_data:
+  dev_node_modules:
 networks:
   infra_net:
     driver: bridge
