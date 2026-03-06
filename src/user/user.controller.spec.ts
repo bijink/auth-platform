@@ -6,7 +6,6 @@ import { UserController } from './user.controller'
 import { UserService } from './user.service'
 
 const mockUsersService = {
-  // createUser: jest.fn(),
   findAllUsers: jest.fn(),
   findUserByUserId: jest.fn(),
   updateUser: jest.fn(),
@@ -40,27 +39,6 @@ describe('UsersController', () => {
     expect(controller).toBeDefined()
   })
 
-  // describe('createUser', () => {
-  //   it('create user then return created user', async () => {
-  //     const dto = { email: 'test@email.com', password: 'pass1234' }
-  //     const expectedRes = { id: 1 }
-
-  //     userService.createUser.mockResolvedValue(expectedRes)
-
-  //     await expect(controller.createUser(dto)).resolves.toBe(expectedRes)
-  //     expect(userService.createUser).toHaveBeenCalledWith(dto)
-  //   })
-
-  //   it('propagates HttpException from service', async () => {
-  //     const dto = { email: 'test@email.com', password: 'pass1234' }
-  //     const expectedErr = new ConflictException()
-
-  //     userService.createUser.mockRejectedValue(expectedErr)
-
-  //     await expect(controller.createUser(dto)).rejects.toBe(expectedErr)
-  //   })
-  // })
-
   describe('getAllUser', () => {
     it('should return users array', async () => {
       const expectedRes = []
@@ -76,6 +54,17 @@ describe('UsersController', () => {
       userService.findAllUsers.mockRejectedValue(expectedErr)
 
       await expect(controller.getAllUsers()).rejects.toBe(expectedErr)
+    })
+  })
+
+  describe('getMe', () => {
+    it('return found user', async () => {
+      const expectedRes = { id: 1 }
+
+      userService.findUserByUserId.mockResolvedValue(expectedRes)
+
+      await expect(controller.getMe(1)).resolves.toBe(expectedRes)
+      expect(userService.findUserByUserId).toHaveBeenCalledWith(1)
     })
   })
 
