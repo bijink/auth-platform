@@ -4,6 +4,10 @@ services:
       context: .
       target: development
     container_name: dev_api
+    command: >
+      sh -c "pnpm prisma migrate deploy && 
+             pnpm prisma db seed && 
+             pnpm start:dev"
     ports:
       - '3001:3000'
     env_file:

@@ -14,7 +14,6 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Development stage
 FROM deps AS development
 COPY . .
-CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm start:dev"]
 
 # Build stage
 FROM deps AS build

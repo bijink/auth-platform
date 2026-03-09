@@ -8,9 +8,10 @@
   "scripts": {
     "postinstall": "prisma generate",
     "prisma:dev:deploy": "prisma migrate deploy",
-    "db:dev:rm": "docker compose -f docker-compose.dev.yml rm dev-db redis -s -v",
-    "db:dev:up": "docker compose -f docker-compose.dev.yml up dev-db redis -d",
-    "db:dev:restart": "pnpm db:dev:rm && pnpm db:dev:up && sleep 1 && pnpm prisma:dev:deploy",
+    "prisma:dev:seed": "prisma db seed",
+    "db:dev:rm": "docker compose -f docker-compose.dev.yml rm dev-db dev-redis -s -v",
+    "db:dev:up": "docker compose -f docker-compose.dev.yml up dev-db dev-redis -d",
+    "db:dev:restart": "pnpm db:dev:rm && pnpm db:dev:up && sleep 1 && pnpm prisma:dev:deploy && pnpm prisma:dev:seed",
     "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy",
     "db:test:rm": "docker compose -f docker-compose.test.yml rm test-db test-redis -s -f -v",
     "db:test:up": "docker compose -f docker-compose.test.yml up test-db test-redis -d",
@@ -35,6 +36,12 @@
     "test:e2e:watch": "jest --watch --config ./test/jest-e2e.json",
     "prisma:test:studio": "pnpm dotenv -e .env.test -- prisma studio",
     "prepare": "husky"
+  },
+  "lint-staged": {
+    "{src,apps,libs,test}/**/*.ts": [
+      "prettier --write",
+      "eslint --fix --max-warnings=0"
+    ]
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
@@ -86,6 +93,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },
@@ -111,12 +119,6 @@
     },
     "transformIgnorePatterns": [
       "/node_modules/(?!uuid)/"
-    ]
-  },
-  "lint-staged": {
-    "{src,apps,libs,test}/**/*.ts": [
-      "prettier --write",
-      "eslint --fix --max-warnings=0"
     ]
   }
 }
