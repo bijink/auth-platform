@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common'
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
+import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
-import { PrismaService } from 'src/prisma/prisma.service'
 import { TokenService } from 'src/token/token.service'
 import {
   ChangeUserRoleDto,

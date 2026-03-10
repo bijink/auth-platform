@@ -9,7 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import * as argon from 'argon2'
 import { Prisma, type User } from 'generated/prisma/client'
 import authConfig from 'src/auth/config/auth.config'
-import { PrismaService } from 'src/prisma/prisma.service'
+import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { TokenService } from './token.service'
 
 jest.mock('argon2')

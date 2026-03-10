@@ -1,7 +1,7 @@
-import { getRedisConnectionToken } from '@nestjs-modules/ioredis'
 import { UnauthorizedException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import * as argon from 'argon2'
+import { RedisService } from 'src/infra/redis/redis.service'
 import { OtpService } from './otp.service'
 import * as util from './util'
 
@@ -31,7 +31,7 @@ describe('OtpService', () => {
       providers: [
         OtpService,
         {
-          provide: getRedisConnectionToken(),
+          provide: RedisService,
           useValue: mockRedis,
         },
       ],

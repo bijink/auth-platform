@@ -44,13 +44,14 @@
     ]
   },
   "dependencies": {
-    "@nestjs-modules/ioredis": "^2.0.2",
+    "@nest-lab/throttler-storage-redis": "^1.2.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.2",
     "argon2": "^0.44.0",
