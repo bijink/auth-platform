@@ -17,8 +17,8 @@ async function bootstrap() {
 
   const SWAGGER_DOC_URL = 'api/swagger-doc'
   const config = new DocumentBuilder()
-    .setTitle('Auth Platform')
-    .setDescription('The auth-platform API description')
+    .setTitle('Authentication System')
+    .setDescription('The authentication system API documentation')
     .setVersion('1.0')
     .addBearerAuth()
     .build()
