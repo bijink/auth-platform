@@ -51,12 +51,12 @@ export class AuthGuard implements CanActivate {
         where: { id: payload.sub },
         select: { email: true, role: true, tokenVersion: true, deleted: true },
       })
-      if (!user) throw new NotFoundException('User not exists')
+      if (!user) throw new NotFoundException('Your account not exists')
       // check user is not active (deleted)
-      if (user.deleted) throw new ForbiddenException('User inactive')
+      if (user.deleted) throw new ForbiddenException('Your account is inactive')
 
       if (user.tokenVersion !== payload.version) {
-        throw new UnauthorizedException('Token revoked')
+        throw new UnauthorizedException('Access token revoked')
       }
 
       request[REQUEST_USER_KEY] = {

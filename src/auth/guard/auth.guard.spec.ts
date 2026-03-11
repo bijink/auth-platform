@@ -104,7 +104,7 @@ describe('AuthGuard', () => {
     mockPrisma.user.findUnique.mockResolvedValue(null)
 
     await expect(guard.canActivate(context)).rejects.toThrow(
-      new NotFoundException('User not exists'),
+      new NotFoundException('Your account not exists'),
     )
   })
 
@@ -115,7 +115,7 @@ describe('AuthGuard', () => {
     mockPrisma.user.findUnique.mockResolvedValue({ deleted: true })
 
     await expect(guard.canActivate(context)).rejects.toThrow(
-      new ForbiddenException('User inactive'),
+      new ForbiddenException('Your account is inactive'),
     )
   })
 
@@ -129,7 +129,7 @@ describe('AuthGuard', () => {
     }) // user version 2
 
     await expect(guard.canActivate(context)).rejects.toThrow(
-      new UnauthorizedException('Token revoked'),
+      new UnauthorizedException('Access token revoked'),
     )
   })
 
