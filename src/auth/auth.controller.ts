@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { OtpService } from 'src/otp/otp.service'
 import { TokenService } from 'src/token/token.service'
 import { CreateUserDto } from 'src/user/dto'
@@ -22,6 +23,7 @@ import {
 } from './dto'
 import { RefreshTokenGuard } from './guard'
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -43,6 +45,7 @@ export class AuthController {
     return this.authService.login(loginDto)
   }
 
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @Post('logout-all')
   logoutAll(@User('sub') userId: number) {
@@ -50,6 +53,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiBearerAuth()
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
   @Post('refresh-token')
@@ -61,6 +65,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiBearerAuth()
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
   @Post('revoke-refresh-token')
@@ -68,6 +73,7 @@ export class AuthController {
     return this.tokenService.revokeRefreshToken(refreshTokenId)
   }
 
+  @ApiBearerAuth()
   @Patch('change-email')
   changeEmail(
     @User('email') oldEmail: string,
@@ -76,6 +82,7 @@ export class AuthController {
     return this.authService.changeEmail(oldEmail, changeEmailDto)
   }
 
+  @ApiBearerAuth()
   @Patch('change-password')
   changePassword(
     @User('email') email: string,
@@ -97,6 +104,7 @@ export class AuthController {
     return this.otpService.emailOtp(emailOtpDto.email)
   }
 
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @Post('guarded-email-otp')
   guardedEmailOtp(@User('email') email: string) {

@@ -79,7 +79,7 @@ export class TokenService {
       })
       if (!user) throw new NotFoundException('User not exists')
       // check user is not active (deleted)
-      if (user.deleted) throw new ForbiddenException('User inactive')
+      if (user.deleted) throw new ForbiddenException('User account is inactive')
       // delete used refresh token from db
       await this.prisma.refreshToken.delete({ where: { id: tokenId } })
       // generate access token and refresh token

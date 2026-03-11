@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import * as argon from 'argon2'
+import { UserAlreadyExistsException } from 'src/custom-exceptions'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
 import { TokenService } from 'src/token/token.service'
@@ -27,6 +28,13 @@ export class AuthService {
   ) {}
 
   public async signup(createUserDto: CreateUserDto) {
+    // validate if a user exists with the same email
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: createUserDto.email },
+      select: { email: true },
+    })
+    if (existingUser)
+      throw new UserAlreadyExistsException('email', existingUser.email)
     const { emailVerifiedCode, ...dto } = createUserDto
     await this.otpService.verifyCode(dto.email, emailVerifiedCode)
     const user = await this.usersService.createUser(dto)
@@ -44,7 +52,7 @@ export class AuthService {
     // if user does not exist, throw exception
     if (!user) throw new NotFoundException('User not found')
     // check user is not active (deleted)
-    if (user.deleted) throw new ForbiddenException('User inactive')
+    if (user.deleted) throw new ForbiddenException('User account inactive')
     // compare password
     const pwMatches = await argon.verify(user.password, loginDto.password)
     // if the password incorrect, throw exception

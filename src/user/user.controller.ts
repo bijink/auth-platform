@@ -8,10 +8,13 @@ import {
   Patch,
 } from '@nestjs/common'
 import { Role } from 'generated/prisma/enums'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { Roles, User } from 'src/auth/decorator'
 import { ChangeUserRoleDto, DeleteUserDto, UpdateUserDto } from './dto'
 import { UserService } from './user.service'
 
+@ApiTags('Users')
+@ApiBearerAuth()
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
