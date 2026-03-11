@@ -19,6 +19,8 @@ services:
       - ./src:/app/src
       - ./prisma:/app/prisma
       - ./generated:/app/generated
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
       - dev_node_modules:/app/node_modules # Prevents local node_modules from overwriting container's
     networks:
       - infra_net

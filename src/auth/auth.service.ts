@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import * as argon from 'argon2'
+import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
-import { PrismaService } from 'src/prisma/prisma.service'
 import { TokenService } from 'src/token/token.service'
 import { CreateUserDto } from 'src/user/dto'
 import { UserService } from 'src/user/user.service'

@@ -1,8 +1,8 @@
 import {
+  ExecutionContext,
   ForbiddenException,
   NotFoundException,
   UnauthorizedException,
-  ExecutionContext,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { JsonWebTokenError, JwtService } from '@nestjs/jwt'
@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { Request } from 'express'
 import authConfig from 'src/auth/config/auth.config'
 import { IS_PUBLIC_KEY } from 'src/auth/decorator'
-import { PrismaService } from 'src/prisma/prisma.service'
+import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { AuthGuard, REQUEST_USER_KEY } from './auth.guard'
 
 describe('AuthGuard', () => {

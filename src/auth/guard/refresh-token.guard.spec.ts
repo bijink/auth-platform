@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import * as argon from 'argon2'
 import { Request } from 'express'
 import authConfig from 'src/auth/config/auth.config'
-import { PrismaService } from 'src/prisma/prisma.service'
+import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { REQUEST_USER_KEY } from './auth.guard'
 import { RefreshTokenGuard } from './refresh-token.guard'
 

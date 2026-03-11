@@ -12,7 +12,7 @@ import * as argon from 'argon2'
 import { Prisma, User } from 'generated/prisma/client'
 import authConfig from 'src/auth/config/auth.config'
 import { JwtAccessPayload, JwtRefreshPayload } from 'src/auth/interface'
-import { PrismaService } from 'src/prisma/prisma.service'
+import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { v7 as uuidv7 } from 'uuid'
 
 @Injectable()

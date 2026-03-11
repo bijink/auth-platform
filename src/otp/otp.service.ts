@@ -1,8 +1,7 @@
-import { InjectRedis } from '@nestjs-modules/ioredis'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import * as argon from 'argon2'
-import Redis from 'ioredis'
 import { VerifyOtpDto } from 'src/auth/dto'
+import { RedisService } from 'src/infra/redis/redis.service'
 import { v7 as uuidv7 } from 'uuid'
 import { generateOtp, generateRedisKey } from './util'
 
@@ -12,7 +11,7 @@ const EMAILED_OTP_REDIS_EX = 180 // 3 minutes
 
 @Injectable()
 export class OtpService {
-  constructor(@InjectRedis() private readonly redis: Redis) {}
+  constructor(private readonly redis: RedisService) {}
 
   public async emailOtp(email: string, guarded = false) {
     const otp = await this.generateAndCacheOtp(email, guarded)
