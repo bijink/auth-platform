@@ -10,5 +10,7 @@
     "^src/(.*)$": "<rootDir>/../src/$1",
     "^generated/(.*)$": "<rootDir>/../dist/generated/$1"
   },
-  "transformIgnorePatterns": ["/node_modules/(?!uuid)/"]
+  "transformIgnorePatterns": ["/node_modules/(?!uuid)/"],
+  "globalSetup": "<rootDir>/global-setup.ts",
+  "globalTeardown": "<rootDir>/global-teardown.ts"
 }
