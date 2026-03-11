@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiSchema } from '@nestjs/swagger'
 import { IsNotEmpty, IsString } from 'class-validator'
 
+@ApiSchema({ name: 'ChangePasswordRequest' })
 export class ChangePasswordDto {
   @ApiProperty({ example: 'oldPassword123' })
   @IsString()

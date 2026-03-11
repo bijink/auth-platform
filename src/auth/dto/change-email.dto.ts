@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiSchema } from '@nestjs/swagger'
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator'
 
+@ApiSchema({ name: 'ChangeEmailRequest' })
 export class ChangeEmailDto {
   @ApiProperty({ example: 'new_email@example.com' })
   @IsEmail()

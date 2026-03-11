@@ -1,6 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiPropertyOptional, ApiSchema } from '@nestjs/swagger'
 import { IsOptional, IsString } from 'class-validator'
 
+@ApiSchema({ name: 'UpdateUserRequest' })
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'John' })
   @IsString()

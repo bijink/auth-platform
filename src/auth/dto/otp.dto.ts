@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiSchema } from '@nestjs/swagger'
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator'
 
+@ApiSchema({ name: 'EmailOtpRequest' })
 export class EmailOtpDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
@@ -8,6 +9,7 @@ export class EmailOtpDto {
   email: string
 }
 
+@ApiSchema({ name: 'VerifyOtpRequest' })
 export class VerifyOtpDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
