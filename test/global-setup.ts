@@ -11,6 +11,8 @@ declare global {
 }
 
 export default async () => {
+  if (globalThis.__PG_CONTAINER__ && globalThis.__REDIS_CONTAINER__) return
+
   // eslint-disable-next-line no-console
   console.log('\n[Global Setup] Starting Testcontainers...')
 

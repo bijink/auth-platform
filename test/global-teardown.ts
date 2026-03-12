@@ -7,6 +7,17 @@ declare global {
 }
 
 export default async () => {
+  const isWatchMode = process.argv.some(
+    (arg) => arg === '--watch' || arg === '--watchAll',
+  )
+  if (
+    isWatchMode &&
+    globalThis.__PG_CONTAINER__ &&
+    globalThis.__REDIS_CONTAINER__
+  ) {
+    return
+  }
+
   // eslint-disable-next-line no-console
   console.log('\n[Global Teardown] Stopping Testcontainers...')
 
