@@ -12,6 +12,10 @@ export class PrismaService extends PrismaClient {
     super({ adapter })
   }
 
+  cleanDb() {
+    return this.$transaction([this.user.deleteMany()])
+  }
+
   async onModuleDestroy() {
     await this.$disconnect()
   }

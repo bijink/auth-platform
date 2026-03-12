@@ -6,8 +6,8 @@ import { RedisContainer, StartedRedisContainer } from '@testcontainers/redis'
 import { execSync } from 'child_process'
 
 declare global {
-  var __PG_CONTAINER__: StartedPostgreSqlContainer | undefined
-  var __REDIS_CONTAINER__: StartedRedisContainer | undefined
+  var __PG_CONTAINER__: StartedPostgreSqlContainer
+  var __REDIS_CONTAINER__: StartedRedisContainer
 }
 
 export default async () => {
@@ -15,13 +15,16 @@ export default async () => {
   console.log('\n[Global Setup] Starting Testcontainers...')
 
   const [pgContainer, redisContainer] = await Promise.all([
-    new PostgreSqlContainer('postgres:16-alpine').withReuse().start(),
+    new PostgreSqlContainer('postgres:17-alpine').withReuse().start(),
     new RedisContainer('redis:7-alpine').withReuse().start(),
   ])
 
   // Set environment variables for the test workers
   process.env.DATABASE_URL = pgContainer.getConnectionUri()
   process.env.REDIS_URL = redisContainer.getConnectionUrl()
+  process.env.POSTGRES_USER = pgContainer.getUsername()
+  process.env.POSTGRES_PASSWORD = pgContainer.getPassword()
+  process.env.POSTGRES_DB = pgContainer.getDatabase()
 
   // Make the containers available globally so globalTeardown can stop them
   globalThis.__PG_CONTAINER__ = pgContainer

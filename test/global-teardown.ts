@@ -2,8 +2,8 @@ import { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { StartedRedisContainer } from '@testcontainers/redis'
 
 declare global {
-  var __PG_CONTAINER__: StartedPostgreSqlContainer | undefined
-  var __REDIS_CONTAINER__: StartedRedisContainer | undefined
+  var __PG_CONTAINER__: StartedPostgreSqlContainer
+  var __REDIS_CONTAINER__: StartedRedisContainer
 }
 
 export default async () => {
