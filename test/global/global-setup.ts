@@ -17,7 +17,7 @@ export default async () => {
   console.log('\n[Global Setup] Starting Testcontainers...')
 
   const [pgContainer, redisContainer] = await Promise.all([
-    new PostgreSqlContainer('postgres:17-alpine').withReuse().start(),
+    new PostgreSqlContainer('postgres:16-alpine').withReuse().start(),
     new RedisContainer('redis:7-alpine').withReuse().start(),
   ])
 

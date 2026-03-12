@@ -10,6 +10,6 @@
     "^src/(.*)$": "<rootDir>/../src/$1",
     "^generated/(.*)$": "<rootDir>/../dist/generated/$1"
   },
-  "globalSetup": "<rootDir>/global-setup.ts",
-  "globalTeardown": "<rootDir>/global-teardown.ts"
+  "globalSetup": "<rootDir>/global/global-setup.ts",
+  "globalTeardown": "<rootDir>/global/global-teardown.ts"
 }
