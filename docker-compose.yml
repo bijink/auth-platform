@@ -15,7 +15,7 @@ services:
     networks:
       - infra_net
   prod-db:
-    image: postgres:17-alpine
+    image: postgres:16-alpine
     container_name: prod_db
     env_file:
       - .env.production
