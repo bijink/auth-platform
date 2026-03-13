@@ -6,10 +6,8 @@ WORKDIR /app
 # Dependencies
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-# To run postinstall prisma folder needed
-COPY prisma ./prisma
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile --ignore-scripts
 
 # Development stage
 FROM deps AS development
@@ -18,6 +16,7 @@ COPY . .
 # Build stage
 FROM deps AS build
 COPY . .
+RUN pnpm prisma generate
 RUN pnpm build
 
 # Production stage
@@ -27,6 +26,6 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./
+COPY --from=build /app/generated ./generated
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
-CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm start:prod"]
