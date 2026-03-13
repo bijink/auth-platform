@@ -4,6 +4,10 @@ services:
       context: .
       target: production
     container_name: prod_api
+    command: >
+      sh -c "pnpm prisma migrate deploy &&
+             pnpm prisma db seed &&
+             pnpm start:prod"
     ports:
       - '3000:3000'
     env_file:
@@ -17,6 +21,8 @@ services:
   prod-db:
     image: postgres:16-alpine
     container_name: prod_db
+    ports:
+      - '5432:5432'
     env_file:
       - .env.production
     volumes:
