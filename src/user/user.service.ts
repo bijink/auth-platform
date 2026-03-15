@@ -122,7 +122,6 @@ export class UserService {
         where: { email },
         omit: { password: true },
       })
-      await this.tokenService.revokeAllToken(deletedUser.id)
       return {
         id: deletedUser.id,
         status: true,

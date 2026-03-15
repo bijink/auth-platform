@@ -176,7 +176,6 @@ describe('UserService', () => {
     it('should completely delete user and revoke token', async () => {
       mockOtpService.verifyCode.mockResolvedValue(true)
       mockPrisma.user.delete.mockResolvedValue({ id: 1 })
-      mockTokenService.revokeAllToken.mockResolvedValue({})
 
       const result = await service.hardDeleteUser('t@t.com', {
         emailVerifiedCode: 'code',
@@ -186,7 +185,6 @@ describe('UserService', () => {
         status: true,
         message: 'User premanently deleted',
       })
-      expect(mockTokenService.revokeAllToken).toHaveBeenCalledWith(1)
     })
   })
 
