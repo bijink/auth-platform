@@ -116,5 +116,10 @@
       "^src/(.*)$": "<rootDir>/../src/$1",
       "^generated/(.*)$": "<rootDir>/../dist/generated/$1"
     }
+  },
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
   }
 }
