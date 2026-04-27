@@ -15,12 +15,13 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deleted      Boolean  @default(false)
-  role         Role     @default(USER)
-  tokenVersion Int      @default(1)
+  id           Int       @id @default(autoincrement())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deleted      Boolean   @default(false)
+  deletedAt    DateTime?
+  role         Role      @default(USER)
+  tokenVersion Int       @default(1)
 
   email    String @unique
   password String

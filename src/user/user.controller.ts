@@ -3,14 +3,22 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
+  Post,
 } from '@nestjs/common'
-import { Role } from 'generated/prisma/enums'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { Roles, User } from 'src/auth/decorator'
-import { ChangeUserRoleDto, DeleteUserDto, UpdateUserDto } from './dto'
+import { Role } from 'generated/prisma/enums'
+import { Public, Roles, User } from 'src/auth/decorator'
+import {
+  ChangeUserRoleDto,
+  DeleteUserDto,
+  ReactivateUserDto,
+  UpdateUserDto,
+} from './dto'
 import { UserService } from './user.service'
 
 @ApiTags('Users')
@@ -49,6 +57,13 @@ export class UserController {
     @Body() deleteUserDto: DeleteUserDto,
   ) {
     return this.userService.softDeleteUser(email, deleteUserDto)
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('reactivate-user')
+  reactivateUser(@Body() reactivateUserDto: ReactivateUserDto) {
+    return this.userService.reactivateUser(reactivateUserDto)
   }
 
   @Delete('hard-delete')

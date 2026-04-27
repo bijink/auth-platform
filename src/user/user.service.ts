@@ -14,6 +14,7 @@ import {
   ChangeUserRoleDto,
   CreateUserDto,
   DeleteUserDto,
+  ReactivateUserDto,
   UpdateUserDto,
 } from './dto'
 
@@ -95,7 +96,7 @@ export class UserService {
       await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
       const deletedUser = await this.prisma.user.update({
         where: { email },
-        data: { deleted: true },
+        data: { deleted: true, deletedAt: new Date() },
         omit: { password: true },
       })
       await this.tokenService.revokeAllToken(deletedUser.id)
@@ -112,6 +113,27 @@ export class UserService {
         }
       }
       throw error
+    }
+  }
+
+  async reactivateUser(dto: ReactivateUserDto) {
+    const foundUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      omit: { password: true },
+    })
+    if (!foundUser) throw new NotFoundException('User not found')
+    if (!foundUser.deleted) throw new ConflictException('User already active')
+    await this.otpService.verifyCode(dto.email, dto.emailVerifiedCode)
+    const reactivatedUser = await this.prisma.user.update({
+      where: { email: dto.email },
+      data: { deleted: false, deletedAt: null },
+      omit: { password: true },
+    })
+    const tokens = await this.tokenService.generateToken(reactivatedUser)
+    return {
+      id: reactivatedUser.id,
+      message: 'User reactivated',
+      ...tokens,
     }
   }
 
