@@ -2,6 +2,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
+import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
@@ -36,6 +37,7 @@ import { UserModule } from './user/user.module'
         storage: new ThrottlerStorageRedisService(redis),
       }),
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [

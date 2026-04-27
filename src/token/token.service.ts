@@ -24,7 +24,7 @@ export class TokenService {
     private readonly prisma: PrismaService,
   ) {}
 
-  public async generateToken(user: User): Promise<{
+  public async generateToken(user: Omit<User, 'password'>): Promise<{
     accessToken: string
     refreshToken: string
   }> {

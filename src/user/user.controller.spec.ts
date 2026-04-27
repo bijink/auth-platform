@@ -1,7 +1,7 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { Role } from 'generated/prisma/enums'
-import { ChangeUserRoleDto, DeleteUserDto } from './dto'
+import { ChangeUserRoleDto, DeleteUserDto, ReactivateUserDto } from './dto'
 import { UserController } from './user.controller'
 import { UserService } from './user.service'
 
@@ -10,6 +10,7 @@ const mockUsersService = {
   findUserByUserId: jest.fn(),
   updateUser: jest.fn(),
   softDeleteUser: jest.fn(),
+  reactivateUser: jest.fn(),
   hardDeleteUser: jest.fn(),
   changeUserRole: jest.fn(),
 }
@@ -166,6 +167,40 @@ describe('UsersController', () => {
       await expect(
         controller.hardDeleteUser(userEmail, deleteUserDto),
       ).rejects.toBe(expectedErr)
+    })
+  })
+
+  describe('reactivateUser', () => {
+    const reactivateUserDto: ReactivateUserDto = {
+      email: 'test@email.com',
+      password: 'StrongPassword!123',
+      emailVerifiedCode: 'verification-code',
+    }
+
+    it('should reactivate user and return tokens', async () => {
+      const expectedRes = {
+        id: 1,
+        message: 'User reactivated',
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }
+
+      userService.reactivateUser.mockResolvedValue(expectedRes)
+
+      await expect(controller.reactivateUser(reactivateUserDto)).resolves.toBe(
+        expectedRes,
+      )
+      expect(userService.reactivateUser).toHaveBeenCalledWith(reactivateUserDto)
+    })
+
+    it('propagates NotFoundException from service', async () => {
+      const expectedErr = new NotFoundException('User not found')
+
+      userService.reactivateUser.mockRejectedValue(expectedErr)
+
+      await expect(controller.reactivateUser(reactivateUserDto)).rejects.toBe(
+        expectedErr,
+      )
     })
   })
 
