@@ -33,6 +33,7 @@ describe('UserService', () => {
 
   const mockTokenService = {
     revokeAllToken: jest.fn(),
+    generateToken: jest.fn(),
   }
 
   beforeEach(async () => {
@@ -185,6 +186,81 @@ describe('UserService', () => {
         status: true,
         message: 'User premanently deleted',
       })
+    })
+  })
+
+  describe('reactivateUser', () => {
+    it('should reactivate deleted user and return tokens', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        email: 'deleted@t.com',
+        deleted: true,
+      })
+      mockOtpService.verifyCode.mockResolvedValue(true)
+      mockPrisma.user.update.mockResolvedValue({
+        id: 1,
+        email: 'deleted@t.com',
+        deleted: false,
+      })
+      mockTokenService.generateToken.mockResolvedValue({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      })
+
+      const result = await service.reactivateUser({
+        email: 'deleted@t.com',
+        password: 'password',
+        emailVerifiedCode: 'verified-code',
+      })
+
+      expect(mockOtpService.verifyCode).toHaveBeenCalledWith(
+        'deleted@t.com',
+        'verified-code',
+      )
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { email: 'deleted@t.com' },
+        data: { deleted: false, deletedAt: null },
+        omit: { password: true },
+      })
+      expect(mockTokenService.generateToken).toHaveBeenCalledWith({
+        id: 1,
+        email: 'deleted@t.com',
+        deleted: false,
+      })
+      expect(result).toEqual({
+        id: 1,
+        message: 'User reactivated',
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      })
+    })
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null)
+
+      await expect(
+        service.reactivateUser({
+          email: 'missing@t.com',
+          password: 'password',
+          emailVerifiedCode: 'verified-code',
+        }),
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('should throw ConflictException when user is already active', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        email: 'active@t.com',
+        deleted: false,
+      })
+
+      await expect(
+        service.reactivateUser({
+          email: 'active@t.com',
+          password: 'password',
+          emailVerifiedCode: 'verified-code',
+        }),
+      ).rejects.toThrow(ConflictException)
     })
   })
 

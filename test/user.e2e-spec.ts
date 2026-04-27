@@ -213,6 +213,85 @@ describe('UserController (e2e)', () => {
     })
   })
 
+  describe('POST /users/reactivate-user', () => {
+    it('should reactivate a soft-deleted user and issue tokens', async () => {
+      const email = 'reactivate@example.com'
+      const password = 'StrongPassword!123'
+      const { accessToken: oldAccessToken } = await getTokens(email)
+
+      const otpRes: { body: { otp: string } } = await request(
+        app.getHttpServer(),
+      )
+        .post('/auth/guarded-email-otp')
+        .set('Authorization', `Bearer ${oldAccessToken}`)
+      const otp = otpRes.body.otp
+
+      const verifyRes: { body: { verifiedCode: string } } = await request(
+        app.getHttpServer(),
+      )
+        .post('/auth/verify-otp')
+        .send({ email, otp })
+      const emailVerifiedCode = verifyRes.body.verifiedCode
+
+      await request(app.getHttpServer())
+        .delete('/users')
+        .set('Authorization', `Bearer ${oldAccessToken}`)
+        .send({ emailVerifiedCode })
+        .expect(200)
+
+      const reactivationOtpRes: { body: { otp: string } } = await request(
+        app.getHttpServer(),
+      )
+        .post('/auth/email-otp')
+        .send({ email })
+      const reactivationOtp = reactivationOtpRes.body.otp
+
+      const reactivationVerifyRes: { body: { verifiedCode: string } } =
+        await request(app.getHttpServer())
+          .post('/auth/verify-otp')
+          .send({ email, otp: reactivationOtp })
+      const reactivationCode = reactivationVerifyRes.body.verifiedCode
+
+      const res: { body: { accessToken: string; refreshToken: string } } =
+        await request(app.getHttpServer())
+          .post('/users/reactivate-user')
+          .send({ email, password, emailVerifiedCode: reactivationCode })
+          .expect(200)
+
+      expect(res.body.accessToken).toBeDefined()
+      expect(res.body.refreshToken).toBeDefined()
+
+      const user = await prisma.user.findUnique({ where: { email } })
+      expect(user?.deleted).toBe(false)
+      expect(user?.deletedAt).toBeNull()
+    })
+
+    it('should return 409 when user is already active', async () => {
+      const email = 'already-active@example.com'
+      const password = 'StrongPassword!123'
+      await getTokens(email)
+
+      const otpRes: { body: { otp: string } } = await request(
+        app.getHttpServer(),
+      )
+        .post('/auth/email-otp')
+        .send({ email })
+      const otp = otpRes.body.otp
+
+      const verifyRes: { body: { verifiedCode: string } } = await request(
+        app.getHttpServer(),
+      )
+        .post('/auth/verify-otp')
+        .send({ email, otp })
+      const emailVerifiedCode = verifyRes.body.verifiedCode
+
+      await request(app.getHttpServer())
+        .post('/users/reactivate-user')
+        .send({ email, password, emailVerifiedCode })
+        .expect(409)
+    })
+  })
+
   describe('GET /users (Admin only)', () => {
     it('should return all users for SUPER_ADMIN', async () => {
       const { accessToken } = await getTokens(

@@ -26,8 +26,8 @@
     "test:cov": "jest --coverage",
     "test:ci": "jest --runInBand --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test -- jest --runInBand --config ./test/jest-e2e.json",
-    "test:e2e:watch": "NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test -- jest --runInBand --watch --config ./test/jest-e2e.json",
+    "test:e2e": "prisma generate && pnpm build && NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test -- jest --runInBand --config ./test/jest-e2e.json",
+    "test:e2e:watch": "prisma generate && pnpm build && NODE_OPTIONS=--experimental-vm-modules dotenv -e .env.test -- jest --runInBand --watch --config ./test/jest-e2e.json",
     "test:all": "pnpm test && pnpm test:e2e",
     "prepare": "husky"
   },
