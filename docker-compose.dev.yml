@@ -5,7 +5,8 @@ services:
       target: development
     container_name: dev_api
     command: >
-      sh -c "pnpm prisma migrate deploy &&
+      sh -c "pnpm install --frozen-lockfile && 
+             pnpm prisma migrate deploy &&
              pnpm prisma db seed &&
              pnpm start:dev"
     ports:
