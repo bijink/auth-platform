@@ -45,6 +45,7 @@ model RefreshToken {
   userId    Int      @map("user_id")
   token     String   @map("token")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  expiresAt DateTime @default(now()) @map("expires_at") @db.Timestamp()
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")

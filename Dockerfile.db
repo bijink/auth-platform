@@ -1,0 +1,14 @@
+FROM postgres:17
+# Update the package list and install the pg_cron extension
+RUN apt-get update && \
+    apt-get install -y postgresql-17-cron && \
+    rm -rf /var/lib/apt/lists/*
+# Initialize pg_cron and schedule the job in DB
+RUN cat <<EOF > /docker-entrypoint-initdb.d/001-pg-cron.sql
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+SELECT cron.schedule(
+    'refresh-token-cleanup',
+    '0 0 * * *',
+    \$\$DELETE FROM refresh_tokens WHERE expires_at < NOW();\$\$
+);
+EOF
