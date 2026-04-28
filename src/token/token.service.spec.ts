@@ -19,6 +19,7 @@ jest.mock('uuid', () => ({
 
 const mockJwtService = {
   signAsync: jest.fn(),
+  decode: jest.fn(),
 }
 
 const mockAuthConfig = {
@@ -83,18 +84,21 @@ describe('TokenService', () => {
       mockJwtService.signAsync
         .mockResolvedValueOnce('mockAccessToken') // first call (access)
         .mockResolvedValueOnce('mockRefreshToken') // second call (refresh)
+      mockJwtService.decode.mockReturnValue({ exp: 1_700_000_000 })
       ;(argon.hash as jest.Mock).mockResolvedValue('hashedRefreshToken')
       mockPrismaService.refreshToken.create.mockResolvedValue({})
 
       const result = await service.generateToken(mockUser)
 
       expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2)
+      expect(mockJwtService.decode).toHaveBeenCalledWith('mockRefreshToken')
       expect(argon.hash).toHaveBeenCalledWith('mockRefreshToken')
       expect(mockPrismaService.refreshToken.create).toHaveBeenCalledWith({
         data: {
           id: 'mock-uuid-v7',
           token: 'hashedRefreshToken',
           userId: mockUser.id,
+          expiresAt: new Date(1_700_000_000 * 1000),
         },
       })
       expect(result).toEqual({

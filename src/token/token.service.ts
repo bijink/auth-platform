@@ -54,6 +54,9 @@ export class TokenService {
           rtid: refreshTokenId,
         },
       )
+      // decode refresh token expiration time from header
+      const { exp: rtExp }: { exp: number } =
+        this.jwtService.decode(refreshToken)
       // hash refresh token
       const hashedRefreshToken = await argon.hash(refreshToken)
       // store refresh token in db
@@ -62,6 +65,7 @@ export class TokenService {
           id: refreshTokenId,
           token: hashedRefreshToken,
           userId: user.id,
+          expiresAt: new Date(rtExp * 1000),
         },
       })
       // return access and refresh tokens
