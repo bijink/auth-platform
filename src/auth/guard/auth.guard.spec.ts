@@ -108,11 +108,11 @@ describe('AuthGuard', () => {
     )
   })
 
-  it('should throw ForbiddenException if user is inactive (deleted)', async () => {
+  it('should throw ForbiddenException if user is inactive (soft-deleted)', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false)
     const context = mockContext({ authorization: 'Bearer valid_token' })
     mockJwtService.verifyAsync.mockResolvedValue({ sub: 1, version: 1 })
-    mockPrisma.user.findUnique.mockResolvedValue({ deleted: true })
+    mockPrisma.user.findUnique.mockResolvedValue({ deletedAt: new Date() })
 
     await expect(guard.canActivate(context)).rejects.toThrow(
       new ForbiddenException('Your account is inactive'),
@@ -124,7 +124,7 @@ describe('AuthGuard', () => {
     const context = mockContext({ authorization: 'Bearer valid_token' })
     mockJwtService.verifyAsync.mockResolvedValue({ sub: 1, version: 1 }) // payload version 1
     mockPrisma.user.findUnique.mockResolvedValue({
-      deleted: false,
+      deletedAt: null,
       tokenVersion: 2,
     }) // user version 2
 
@@ -149,7 +149,7 @@ describe('AuthGuard', () => {
       email: 'test@test.com',
       role: 'USER',
       tokenVersion: 1,
-      deleted: false,
+      deletedAt: null,
     })
 
     const result = await guard.canActivate(context)

@@ -51,8 +51,8 @@ export class AuthService {
     })
     // if user does not exist, throw exception
     if (!user) throw new NotFoundException('User not found')
-    // check user is not active (deleted)
-    if (user.deleted) throw new ForbiddenException('User account inactive')
+    // check user is not active (soft-deleted)
+    if (user.deletedAt) throw new ForbiddenException('User account inactive')
     // compare password
     const pwMatches = await argon.verify(user.password, loginDto.password)
     // if the password incorrect, throw exception

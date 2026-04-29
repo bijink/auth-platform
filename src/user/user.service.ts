@@ -96,14 +96,13 @@ export class UserService {
       await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
       const deletedUser = await this.prisma.user.update({
         where: { email },
-        data: { deleted: true, deletedAt: new Date() },
+        data: { deletedAt: new Date() },
         omit: { password: true },
       })
       await this.tokenService.revokeAllToken(deletedUser.id)
       return {
         id: deletedUser.id,
         status: true,
-        deleted: deletedUser.deleted,
         message: 'Soft deleted user',
       }
     } catch (error) {
@@ -122,11 +121,11 @@ export class UserService {
       omit: { password: true },
     })
     if (!foundUser) throw new NotFoundException('User not found')
-    if (!foundUser.deleted) throw new ConflictException('User already active')
+    if (!foundUser.deletedAt) throw new ConflictException('User already active')
     await this.otpService.verifyCode(dto.email, dto.emailVerifiedCode)
     const reactivatedUser = await this.prisma.user.update({
       where: { email: dto.email },
-      data: { deleted: false, deletedAt: null },
+      data: { deletedAt: null },
       omit: { password: true },
     })
     const tokens = await this.tokenService.generateToken(reactivatedUser)

@@ -144,7 +144,10 @@ describe('UserService', () => {
   describe('softDeleteUser', () => {
     it('should soft delete user and revoke token', async () => {
       mockOtpService.verifyCode.mockResolvedValue(true)
-      mockPrisma.user.update.mockResolvedValue({ id: 1, deleted: true })
+      mockPrisma.user.update.mockResolvedValue({
+        id: 1,
+        deletedAt: new Date(),
+      })
       mockTokenService.revokeAllToken.mockResolvedValue({})
 
       const result = await service.softDeleteUser('t@t.com', {
@@ -153,7 +156,6 @@ describe('UserService', () => {
       expect(result).toEqual({
         id: 1,
         status: true,
-        deleted: true,
         message: 'Soft deleted user',
       })
       expect(mockTokenService.revokeAllToken).toHaveBeenCalledWith(1)
@@ -190,17 +192,17 @@ describe('UserService', () => {
   })
 
   describe('reactivateUser', () => {
-    it('should reactivate deleted user and return tokens', async () => {
+    it('should reactivate soft-deleted user and return tokens', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         id: 1,
         email: 'deleted@t.com',
-        deleted: true,
+        deletedAt: new Date(),
       })
       mockOtpService.verifyCode.mockResolvedValue(true)
       mockPrisma.user.update.mockResolvedValue({
         id: 1,
         email: 'deleted@t.com',
-        deleted: false,
+        deletedAt: null,
       })
       mockTokenService.generateToken.mockResolvedValue({
         accessToken: 'access-token',
@@ -219,13 +221,13 @@ describe('UserService', () => {
       )
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { email: 'deleted@t.com' },
-        data: { deleted: false, deletedAt: null },
+        data: { deletedAt: null },
         omit: { password: true },
       })
       expect(mockTokenService.generateToken).toHaveBeenCalledWith({
         id: 1,
         email: 'deleted@t.com',
-        deleted: false,
+        deletedAt: null,
       })
       expect(result).toEqual({
         id: 1,
@@ -251,7 +253,7 @@ describe('UserService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         id: 1,
         email: 'active@t.com',
-        deleted: false,
+        deletedAt: null,
       })
 
       await expect(

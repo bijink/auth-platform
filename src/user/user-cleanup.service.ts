@@ -15,7 +15,6 @@ export class UserCleanupService {
 
     const usersToDelete = await this.prisma.user.findMany({
       where: {
-        deleted: true,
         deletedAt: {
           lte: threshold,
         },

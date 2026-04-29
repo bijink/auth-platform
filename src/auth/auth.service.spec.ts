@@ -96,8 +96,8 @@ describe('AuthService', () => {
       ).rejects.toThrow(NotFoundException)
     })
 
-    it('should throw ForbiddenException if user is deleted', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ deleted: true })
+    it('should throw ForbiddenException if user is soft-deleted', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ deletedAt: new Date() })
       await expect(
         service.login({ email: 't@t.com', password: 'p' }),
       ).rejects.toThrow(ForbiddenException)
@@ -105,7 +105,7 @@ describe('AuthService', () => {
 
     it('should throw ForbiddenException if password mismsatch', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        deleted: false,
+        deletedAt: null,
         password: 'hashed',
       })
       ;(argon.verify as jest.Mock).mockResolvedValue(false)
@@ -115,7 +115,7 @@ describe('AuthService', () => {
     })
 
     it('should generate token if successful', async () => {
-      const mockUser = { id: 1, deleted: false, password: 'hashed' }
+      const mockUser = { id: 1, deletedAt: null, password: 'hashed' }
       mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       ;(argon.verify as jest.Mock).mockResolvedValue(true)
       mockTokenService.generateToken.mockResolvedValue({ accessToken: 'a' })

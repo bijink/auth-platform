@@ -130,10 +130,10 @@ describe('TokenService', () => {
       )
     })
 
-    it('should throw ForbiddenException if user is deleted', async () => {
+    it('should throw ForbiddenException if user is soft-deleted', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({
         id: 1,
-        deleted: true,
+        deletedAt: new Date(),
       })
 
       await expect(service.refreshToken(1, 'mockTokenId')).rejects.toThrow(
@@ -144,7 +144,7 @@ describe('TokenService', () => {
     it('should throw UnauthorizedException on JsonWebTokenError', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({
         id: 1,
-        deleted: false,
+        deletedAt: null,
       })
       mockPrismaService.refreshToken.delete.mockRejectedValue(
         new JsonWebTokenError('Invalid token'),
@@ -160,7 +160,7 @@ describe('TokenService', () => {
         id: 1,
         email: 'test@test.com',
         tokenVersion: 1,
-        deleted: false,
+        deletedAt: null,
       } as User
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser)
       mockPrismaService.refreshToken.delete.mockResolvedValue({})
