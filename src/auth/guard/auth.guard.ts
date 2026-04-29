@@ -49,11 +49,17 @@ export class AuthGuard implements CanActivate {
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
-        select: { email: true, role: true, tokenVersion: true, deleted: true },
+        select: {
+          email: true,
+          role: true,
+          tokenVersion: true,
+          deletedAt: true,
+        },
       })
       if (!user) throw new NotFoundException('Your account not exists')
-      // check user is not active (deleted)
-      if (user.deleted) throw new ForbiddenException('Your account is inactive')
+      // check user is not active (soft-deleted)
+      if (user.deletedAt)
+        throw new ForbiddenException('Your account is inactive')
 
       if (user.tokenVersion !== payload.version) {
         throw new UnauthorizedException('Access token revoked')

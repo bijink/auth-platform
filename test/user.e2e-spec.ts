@@ -94,7 +94,7 @@ describe('UserController (e2e)', () => {
       // Soft delete the user
       await prisma.user.update({
         where: { email },
-        data: { deleted: true },
+        data: { deletedAt: new Date() },
       })
 
       await request(app.getHttpServer())
@@ -179,7 +179,7 @@ describe('UserController (e2e)', () => {
         .expect(200)
 
       const user = await prisma.user.findUnique({ where: { email } })
-      expect(user?.deleted).toBe(true)
+      expect(user?.deletedAt).not.toBeNull()
     })
   })
 
@@ -262,7 +262,6 @@ describe('UserController (e2e)', () => {
       expect(res.body.refreshToken).toBeDefined()
 
       const user = await prisma.user.findUnique({ where: { email } })
-      expect(user?.deleted).toBe(false)
       expect(user?.deletedAt).toBeNull()
     })
 
