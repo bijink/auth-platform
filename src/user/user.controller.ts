@@ -23,6 +23,7 @@ import { UserService } from './user.service'
 
 @ApiTags('Users')
 @ApiBearerAuth()
+// @UseInterceptors(AuditInterceptor)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -66,6 +67,7 @@ export class UserController {
     return this.userService.reactivateUser(reactivateUserDto)
   }
 
+  // #remove this route (hard-delete), instead create user block and unblock routes (allow only super_admin/admin)
   @Delete('hard-delete')
   hardDeleteUser(
     @User('email') email: string,

@@ -1,5 +1,10 @@
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
-import { Module } from '@nestjs/common'
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { ScheduleModule } from '@nestjs/schedule'
@@ -8,7 +13,9 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthInfrastructureModule } from './auth/auth-infrastructure.module'
 import { AuthModule } from './auth/auth.module'
+import { RequestContextMiddleware } from './common/middleware'
 import envValidation from './config/env.validation'
+import { AlsModule } from './infra/als/als.module'
 import { PrismaModule } from './infra/prisma/prisma.module'
 import { RedisModule } from './infra/redis/redis.module'
 import { RedisService } from './infra/redis/redis.service'
@@ -38,6 +45,7 @@ import { UserModule } from './user/user.module'
       }),
     }),
     ScheduleModule.forRoot(),
+    AlsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -48,4 +56,11 @@ import { UserModule } from './user/user.module'
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestContextMiddleware)
+      .exclude({ path: '*path', method: RequestMethod.GET })
+      .forRoutes({ path: '*path', method: RequestMethod.ALL })
+  }
+}

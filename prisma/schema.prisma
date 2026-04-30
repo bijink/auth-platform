@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider     = "prisma-client"
   output       = "../generated/prisma"
@@ -15,18 +12,18 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamp()
-  deletedAt DateTime? @map("deleted_at")
-
-  email        String  @unique
-  password     String
-  firstName    String? @map("first_name")
-  lastName     String? @map("last_name")
-  role         Role    @default(USER)
-  tokenVersion Int     @default(1) @map("token_version")
-
+  id            Int            @id @default(autoincrement())
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamp()
+  deletedAt     DateTime?      @map("deleted_at")
+  // 
+  email         String         @unique
+  password      String
+  firstName     String?        @map("first_name")
+  lastName      String?        @map("last_name")
+  role          Role           @default(USER)
+  tokenVersion  Int            @default(1) @map("token_version")
+  // 
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -43,11 +40,29 @@ model RefreshToken {
   id        String   @id @db.Uuid
   userId    Int      @map("user_id")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
-
+  // 
   token     String
   expiresAt DateTime @map("expires_at") @db.Timestamp()
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 
+  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  // 
+  action    String // e.g., "CREATE", "UPDATE", "DELETE"
+  entity    String // e.g., "User", "Product"
+  entityId  String   @map("entity_id")
+  oldData   Json?    @map("old_data")
+  newData   Json?    @map("new_data")
+  // 
+  url       String?
+  userId    Int?     @map("user_id") // ID of the user who performed the action
+  userEmail String?  @map("user_email") // Email of the user who performed the action
+  ipAddress String?  @map("ip_address")
+
+  @@map("audit_logs")
 }

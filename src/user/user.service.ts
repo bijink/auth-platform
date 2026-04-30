@@ -77,7 +77,7 @@ export class UserService {
 
   async updateUser(userId: number, updateUserDto: UpdateUserDto) {
     try {
-      return await this.prisma.user.update({
+      return await this.prisma.withAudit.user.update({
         data: updateUserDto,
         where: { id: userId },
         omit: { password: true },

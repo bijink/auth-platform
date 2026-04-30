@@ -11,6 +11,7 @@ import type { ConfigType } from '@nestjs/config'
 import { Reflector } from '@nestjs/core'
 import { JsonWebTokenError, JwtService } from '@nestjs/jwt'
 import { Request } from 'express'
+import { AlsService } from 'src/infra/als/als.service'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import authConfig from '../config/auth.config'
 import { IS_PUBLIC_KEY } from '../decorator'
@@ -22,11 +23,12 @@ export const REQUEST_USER_KEY = 'user'
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private jwtService: JwtService,
-    private reflector: Reflector,
+    private readonly jwtService: JwtService,
+    private readonly reflector: Reflector,
     @Inject(authConfig.KEY)
     private readonly authConfiguration: ConfigType<typeof authConfig>,
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
+    private readonly als: AlsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -65,11 +67,20 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Access token revoked')
       }
 
-      request[REQUEST_USER_KEY] = {
+      const activeUser: ActiveUser = {
         sub: payload.sub,
         email: user.email,
         role: user.role,
-      } as ActiveUser
+      }
+
+      request[REQUEST_USER_KEY] = activeUser
+
+      // update the ALS store with the verified user
+      const store = this.als.getStore()
+      if (store) {
+        store.set('userId', activeUser.sub)
+        store.set('userEmail', activeUser.email)
+      }
     } catch (error) {
       if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException(error)
