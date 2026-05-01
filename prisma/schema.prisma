@@ -54,6 +54,7 @@ model AuditLog {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
   // 
   action    String // e.g., "CREATE", "UPDATE", "DELETE"
+  entity    String? // e.g., "User", "Product"
   oldData   Json?    @map("old_data")
   newData   Json?    @map("new_data")
   // 

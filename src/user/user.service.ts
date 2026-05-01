@@ -37,7 +37,7 @@ export class UserService {
     try {
       // generate the password hash
       const hashedPassword = await argon.hash(createUserDto.password)
-      const createdUser = await this.prisma.user.create({
+      const createdUser = await this.prisma.withAudit.user.create({
         data: { ...createUserDto, password: hashedPassword },
         omit: { password: omitPassword },
       })
