@@ -50,11 +50,11 @@ model RefreshToken {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
+  id        String   @default(uuid())
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
   // 
   action    String // e.g., "CREATE", "UPDATE", "DELETE"
-  entity    String? // e.g., "User", "Product"
+  entity    String // e.g., "User", "Product"
   oldData   Json?    @map("old_data")
   newData   Json?    @map("new_data")
   // 
@@ -64,5 +64,8 @@ model AuditLog {
   userEmail String?  @map("user_email") // Email of the user who performed the action
   ipAddress String?  @map("ip_address")
 
+  @@id([id, createdAt])
+  @@index([userId], map: "idx_audit_logs_user_id")
+  @@index([userEmail], map: "idx_audit_logs_user_email")
   @@map("audit_logs")
 }
