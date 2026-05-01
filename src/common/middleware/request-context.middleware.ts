@@ -6,14 +6,11 @@ import { AlsService } from 'src/infra/als/als.service'
 export class RequestContextMiddleware implements NestMiddleware {
   constructor(private readonly als: AlsService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
-    // const mutationMethods = ['POST', 'PUT', 'PATCH', 'DELETE']
-    // If it's a GET or HEAD request, just skip the ALS logic
-    // if (!mutationMethods.includes(req.method)) return next()
-
+  use(req: Request, _res: Response, next: NextFunction) {
     const store: Map<string, any> = new Map()
     store.set('ip', req.ip)
     store.set('url', req.url)
+    store.set('method', req.method)
 
     this.als.run(store, () => next())
   }

@@ -1,6 +1,17 @@
 import { PrismaClient, type Prisma } from 'generated/prisma/client'
 import { AlsService } from '../als/als.service'
 
+type PrismaJsonValue =
+  | Prisma.InputJsonValue
+  | Prisma.NullableJsonNullValueInput
+  | undefined
+
+const action = {
+  CREATE: 'CREATE',
+  UPDATA: 'UPDATE',
+  DELETE: 'DELETE',
+}
+
 export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
   return client.$extends({
     query: {
@@ -8,19 +19,15 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
         async update({ model, args, query }) {
           if (model === 'AuditLog') return query(args)
 
-          // Get the data from the ALS pocket!
+          // Get the data from the ALS pocket
           const store = als.getStore()
-          const userIdValue: unknown = store?.get('userId')
-          const userEmailValue: unknown = store?.get('userEmail')
-          const ipValue: unknown = store?.get('ip')
-          const urlValue: unknown = store?.get('url')
-
-          const userId =
-            typeof userIdValue === 'number' ? userIdValue : undefined
-          const userEmail =
-            typeof userEmailValue === 'string' ? userEmailValue : undefined
-          const ipAddress = typeof ipValue === 'string' ? ipValue : undefined
-          const url = typeof urlValue === 'string' ? urlValue : undefined
+          const userId = store?.get('userId') as unknown as number | undefined
+          const userEmail = store?.get('userEmail') as unknown as
+            | string
+            | undefined
+          const ipAddress = store?.get('ip') as unknown as string | undefined
+          const url = store?.get('url') as unknown as string | undefined
+          const method = store?.get('method') as unknown as string | undefined
 
           return client.$transaction(async (tx) => {
             const txModels = tx as unknown as Record<
@@ -34,20 +41,20 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
 
             const result = await query(args)
 
+            const newData = await txModels[model]?.findUnique?.({
+              where: args.where,
+            })
+
             await tx.auditLog.create({
               data: {
-                action: 'UPDATE',
-                entity: model,
-                entityId: JSON.stringify(args.where),
-                oldData: oldData as
-                  | Prisma.InputJsonValue
-                  | Prisma.NullableJsonNullValueInput
-                  | undefined,
-                newData: result,
                 userId,
                 userEmail,
                 ipAddress,
                 url,
+                method,
+                action: `${model.toUpperCase()}_${action.UPDATA}`,
+                oldData: oldData as PrismaJsonValue,
+                newData: newData as PrismaJsonValue,
               },
             })
 

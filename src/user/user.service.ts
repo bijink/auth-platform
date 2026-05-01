@@ -171,7 +171,7 @@ export class UserService {
         `User role is '${changeUserRoleDto.role}' already`,
       )
     // change user role
-    const updatedUser = await this.prisma.user.update({
+    const updatedUser = await this.prisma.withAudit.user.update({
       where: { id },
       data: {
         role: changeUserRoleDto.role,

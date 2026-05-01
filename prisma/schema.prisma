@@ -54,11 +54,10 @@ model AuditLog {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
   // 
   action    String // e.g., "CREATE", "UPDATE", "DELETE"
-  entity    String // e.g., "User", "Product"
-  entityId  String   @map("entity_id")
   oldData   Json?    @map("old_data")
   newData   Json?    @map("new_data")
   // 
+  method    String? // api request method
   url       String?
   userId    Int?     @map("user_id") // ID of the user who performed the action
   userEmail String?  @map("user_email") // Email of the user who performed the action
