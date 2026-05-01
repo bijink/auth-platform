@@ -23,7 +23,6 @@ import { UserService } from './user.service'
 
 @ApiTags('Users')
 @ApiBearerAuth()
-// @UseInterceptors(AuditInterceptor)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

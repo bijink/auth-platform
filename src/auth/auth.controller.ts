@@ -33,7 +33,6 @@ export class AuthController {
   ) {}
 
   @Public()
-  // @UseInterceptors(AuditInterceptor)
   @Post('signup')
   signup(@Body() createUserDto: CreateUserDto) {
     return this.authService.signup(createUserDto)
@@ -75,7 +74,6 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  // @UseInterceptors(AuditInterceptor)
   @Patch('change-email')
   changeEmail(
     @User('email') oldEmail: string,
@@ -85,7 +83,6 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  // @UseInterceptors(AuditInterceptor)
   @Patch('change-password')
   changePassword(
     @User('email') email: string,
@@ -95,7 +92,6 @@ export class AuthController {
   }
 
   @Public()
-  // @UseInterceptors(AuditInterceptor)
   @Patch('forgot-password')
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto)

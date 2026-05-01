@@ -75,7 +75,7 @@ export class AuthService {
       false,
     )
     await this.otpService.verifyCode(oldEmail, dto.oldEmailVerifiedCode, true)
-    const user = await this.prisma.user.update({
+    const user = await this.prisma.withAudit.user.update({
       where: { email: oldEmail },
       data: {
         email: dto.newEmail,
@@ -106,7 +106,7 @@ export class AuthService {
     // generate the password hash
     const hashedNewPassword = await argon.hash(dto.newPassword)
     // update user password
-    await this.prisma.user.update({
+    await this.prisma.withAudit.user.update({
       where: { email },
       data: { password: hashedNewPassword },
     })
@@ -122,7 +122,7 @@ export class AuthService {
     // generate the password hash
     const hashedNewPassword = await argon.hash(dto.newPassword)
     // update user password
-    await this.prisma.user.update({
+    await this.prisma.withAudit.user.update({
       where: { email: dto.email },
       data: { password: hashedNewPassword },
     })

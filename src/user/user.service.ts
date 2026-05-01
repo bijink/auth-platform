@@ -94,7 +94,7 @@ export class UserService {
   async softDeleteUser(email: string, dto: DeleteUserDto) {
     try {
       await this.otpService.verifyCode(email, dto.emailVerifiedCode, true)
-      const deletedUser = await this.prisma.user.update({
+      const deletedUser = await this.prisma.withAudit.user.update({
         where: { email },
         data: { deletedAt: new Date() },
         omit: { password: true },
@@ -116,14 +116,11 @@ export class UserService {
   }
 
   async reactivateUser(dto: ReactivateUserDto) {
-    const foundUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-      omit: { password: true },
-    })
+    const foundUser = await this.findUserByEmail(dto.email)
     if (!foundUser) throw new NotFoundException('User not found')
     if (!foundUser.deletedAt) throw new ConflictException('User already active')
     await this.otpService.verifyCode(dto.email, dto.emailVerifiedCode)
-    const reactivatedUser = await this.prisma.user.update({
+    const reactivatedUser = await this.prisma.withAudit.user.update({
       where: { email: dto.email },
       data: { deletedAt: null },
       omit: { password: true },
