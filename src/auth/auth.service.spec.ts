@@ -24,7 +24,11 @@ describe('AuthService', () => {
   const mockPrisma = {
     user: {
       findUnique: jest.fn(),
-      update: jest.fn(),
+    },
+    withAudit: {
+      user: {
+        update: jest.fn(),
+      },
     },
     refreshToken: {
       deleteMany: jest.fn(),
@@ -137,7 +141,10 @@ describe('AuthService', () => {
   describe('changeEmail', () => {
     it('should verify codes, update user and revoke all refresh tokens', async () => {
       mockOtpService.verifyCode.mockResolvedValue(true)
-      mockPrisma.user.update.mockResolvedValue({ id: 1, email: 'new@t.com' })
+      mockPrisma.withAudit.user.update.mockResolvedValue({
+        id: 1,
+        email: 'new@t.com',
+      })
       mockPrisma.refreshToken.deleteMany.mockResolvedValue({})
       mockTokenService.generateToken.mockResolvedValue({ accessToken: 'a' })
 
@@ -158,7 +165,7 @@ describe('AuthService', () => {
         'c2',
         true,
       )
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockPrisma.withAudit.user.update).toHaveBeenCalledWith({
         where: { email: 'old@t.com' },
         data: { email: 'new@t.com', tokenVersion: { increment: 1 } },
       })
@@ -183,7 +190,7 @@ describe('AuthService', () => {
       })
       ;(argon.verify as jest.Mock).mockResolvedValue(true)
       ;(argon.hash as jest.Mock).mockResolvedValue('newHashed')
-      mockPrisma.user.update.mockResolvedValue({})
+      mockPrisma.withAudit.user.update.mockResolvedValue({})
 
       const dto = {
         oldPassword: 'o',
@@ -203,7 +210,7 @@ describe('AuthService', () => {
       )
       expect(argon.verify).toHaveBeenCalledWith('oldHashed', 'o')
       expect(argon.hash).toHaveBeenCalledWith('n')
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockPrisma.withAudit.user.update).toHaveBeenCalledWith({
         where: { email: 'test@t.com' },
         data: { password: 'newHashed' },
       })
@@ -233,7 +240,7 @@ describe('AuthService', () => {
       mockUsersService.findUserByEmail.mockResolvedValue({ id: 1 })
       mockOtpService.verifyCode.mockResolvedValue(true)
       ;(argon.hash as jest.Mock).mockResolvedValue('newHashed')
-      mockPrisma.user.update.mockResolvedValue({})
+      mockPrisma.withAudit.user.update.mockResolvedValue({})
       mockTokenService.generateToken.mockResolvedValue({ accessToken: 'a' })
 
       const dto = {
@@ -251,7 +258,7 @@ describe('AuthService', () => {
         'code',
       )
       expect(argon.hash).toHaveBeenCalledWith('n')
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockPrisma.withAudit.user.update).toHaveBeenCalledWith({
         where: { email: 'test@t.com' },
         data: { password: 'newHashed' },
       })

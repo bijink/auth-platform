@@ -21,9 +21,13 @@ describe('UserService', () => {
     user: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
       delete: jest.fn(),
+    },
+    withAudit: {
+      user: {
+        create: jest.fn(),
+        update: jest.fn(),
+      },
     },
   }
 
@@ -71,7 +75,10 @@ describe('UserService', () => {
   describe('createUser', () => {
     it('should create and return user without password', async () => {
       ;(argon.hash as jest.Mock).mockResolvedValue('hashed_password')
-      mockPrisma.user.create.mockResolvedValue({ id: 1, email: 'test@t.com' })
+      mockPrisma.withAudit.user.create.mockResolvedValue({
+        id: 1,
+        email: 'test@t.com',
+      })
       const result = await service.createUser({
         email: 'test@t.com',
         password: 'password',
@@ -79,7 +86,7 @@ describe('UserService', () => {
         lastName: 't',
       })
       expect(result).toEqual({ id: 1, email: 'test@t.com' })
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      expect(mockPrisma.withAudit.user.create).toHaveBeenCalledWith({
         data: {
           email: 'test@t.com',
           password: 'hashed_password',
@@ -96,7 +103,7 @@ describe('UserService', () => {
         code: 'P2002',
         clientVersion: '1',
       })
-      mockPrisma.user.create.mockRejectedValue(err)
+      mockPrisma.withAudit.user.create.mockRejectedValue(err)
       await expect(
         service.createUser({
           email: 'test@t.com',
@@ -133,7 +140,10 @@ describe('UserService', () => {
 
   describe('updateUser', () => {
     it('should return updated user', async () => {
-      mockPrisma.user.update.mockResolvedValue({ id: 1, firstName: 'A' })
+      mockPrisma.withAudit.user.update.mockResolvedValue({
+        id: 1,
+        firstName: 'A',
+      })
       await expect(service.updateUser(1, { firstName: 'A' })).resolves.toEqual({
         id: 1,
         firstName: 'A',
@@ -144,7 +154,7 @@ describe('UserService', () => {
   describe('softDeleteUser', () => {
     it('should soft delete user and revoke token', async () => {
       mockOtpService.verifyCode.mockResolvedValue(true)
-      mockPrisma.user.update.mockResolvedValue({
+      mockPrisma.withAudit.user.update.mockResolvedValue({
         id: 1,
         deletedAt: new Date(),
       })
@@ -167,7 +177,7 @@ describe('UserService', () => {
         code: 'P2025',
         clientVersion: '1',
       })
-      mockPrisma.user.update.mockRejectedValue(err)
+      mockPrisma.withAudit.user.update.mockRejectedValue(err)
 
       await expect(
         service.softDeleteUser('t@t.com', { emailVerifiedCode: 'code' }),
@@ -199,7 +209,7 @@ describe('UserService', () => {
         deletedAt: new Date(),
       })
       mockOtpService.verifyCode.mockResolvedValue(true)
-      mockPrisma.user.update.mockResolvedValue({
+      mockPrisma.withAudit.user.update.mockResolvedValue({
         id: 1,
         email: 'deleted@t.com',
         deletedAt: null,
@@ -219,7 +229,7 @@ describe('UserService', () => {
         'deleted@t.com',
         'verified-code',
       )
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockPrisma.withAudit.user.update).toHaveBeenCalledWith({
         where: { email: 'deleted@t.com' },
         data: { deletedAt: null },
         omit: { password: true },
@@ -290,7 +300,7 @@ describe('UserService', () => {
 
     it('should change role, increment tokenVersion and return message', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ role: Role.USER })
-      mockPrisma.user.update.mockResolvedValue({
+      mockPrisma.withAudit.user.update.mockResolvedValue({
         id: 1,
         role: Role.ADMIN,
         email: 't@t.com',
@@ -303,7 +313,7 @@ describe('UserService', () => {
         email: 't@t.com',
         message: "User role changed from 'USER' to 'ADMIN'",
       })
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockPrisma.withAudit.user.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { role: Role.ADMIN, tokenVersion: { increment: 1 } },
         select: { id: true, role: true, email: true },
