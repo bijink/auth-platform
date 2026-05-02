@@ -10,6 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { Request } from 'express'
 import authConfig from 'src/auth/config/auth.config'
 import { IS_PUBLIC_KEY } from 'src/auth/decorator'
+import { AlsService } from 'src/infra/als/als.service'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { AuthGuard, REQUEST_USER_KEY } from './auth.guard'
 
@@ -31,6 +32,9 @@ describe('AuthGuard', () => {
   }
 
   const mockAuthConfig = { secret: 'test-secret' }
+  const mockAlsService = {
+    getStore: jest.fn(),
+  }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -40,6 +44,7 @@ describe('AuthGuard', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: PrismaService, useValue: mockPrisma },
         { provide: authConfig.KEY, useValue: mockAuthConfig },
+        { provide: AlsService, useValue: mockAlsService },
       ],
     }).compile()
 
@@ -48,6 +53,7 @@ describe('AuthGuard', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
+    mockAlsService.getStore.mockReturnValue(undefined)
   })
 
   const mockContext = (headers: Record<string, string> = {}) => {

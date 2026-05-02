@@ -6,9 +6,65 @@ RUN apt-get update && \
 # Initialize pg_cron and schedule the job in DB
 RUN cat <<EOF > /docker-entrypoint-initdb.d/001-pg-cron.sql
 CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- =========================
+-- Schedule the cleanup for refresh_tokens (every sunday midnight)
+-- =========================
 SELECT cron.schedule(
-    'refresh-token-cleanup',
-    '0 0 * * *',
-    \$\$DELETE FROM refresh_tokens WHERE expires_at < NOW();\$\$
+  'refresh-token-cleanup',
+  '0 0 * * 0',
+  \$\$
+  DELETE FROM refresh_tokens WHERE expires_at < NOW();
+  \$\$
+);
+
+-- =========================
+-- Schedule the next month Partition Creation for audit_logs (every 1 month)
+-- =========================
+SELECT cron.schedule(
+  'create-audit-partition',
+  '0 0 1 * *',
+  \$job\$
+  DO \$do\$
+  DECLARE
+    start_date DATE := date_trunc('month', NOW());
+    next_month DATE := start_date + INTERVAL '1 month';
+  BEGIN
+    EXECUTE format(
+      'CREATE TABLE IF NOT EXISTS %I PARTITION OF audit_logs
+      FOR VALUES FROM (%L) TO (%L);',
+      'audit_logs_' || to_char(next_month, 'YYYY_MM'),
+      next_month,
+      next_month + INTERVAL '1 month'
+    );
+  END
+  \$do\$;
+  \$job\$
+);
+
+-- =========================
+-- Schedule the Partition Drop for audit_logs (every 1 month, 3 month retention)
+-- =========================
+SELECT cron.schedule(
+  'drop-old-audit-partitions',
+  '0 1 1 * *',
+  \$job\$
+  DO \$do\$
+  DECLARE
+    cutoff DATE := date_trunc('month', NOW()) - INTERVAL '3 months';
+    partition_name TEXT;
+  BEGIN
+    FOR partition_name IN
+      SELECT tablename
+      FROM pg_tables
+      WHERE tablename LIKE 'audit_logs_%'
+    LOOP
+      IF partition_name < 'audit_logs_' || to_char(cutoff, 'YYYY_MM') THEN
+        EXECUTE format('DROP TABLE IF EXISTS %I;', partition_name);
+      END IF;
+    END LOOP;
+  END
+  \$do\$;
+  \$job\$
 );
 EOF
