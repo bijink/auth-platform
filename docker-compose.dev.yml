@@ -27,8 +27,13 @@ services:
     networks:
       - dev_infra_net
   dev-db:
-    image: postgres:17
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     container_name: dev_db
+    command: >
+      postgres -c shared_preload_libraries=pg_cron
+               -c cron.database_name=auth_system
     ports:
       - '5431:5432'
     env_file:
