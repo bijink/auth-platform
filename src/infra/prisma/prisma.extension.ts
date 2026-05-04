@@ -7,10 +7,11 @@ type PrismaJsonValue =
   | Prisma.NullableJsonNullValueInput
   | undefined
 
-const action = {
+const auditLogType = {
   CREATE: 'CREATE',
   UPDATA: 'UPDATE',
   DELETE: 'DELETE',
+  ERROR: 'ERROR',
 }
 
 export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
@@ -39,10 +40,12 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
             await tx.auditLog.create({
               data: {
                 ...context,
-                action: action.CREATE,
-                entity: model,
-                oldData: undefined,
-                newData: newData as PrismaJsonValue,
+                type: auditLogType.CREATE,
+                details: {
+                  entity: model,
+                  oldData: null,
+                  newData,
+                } as PrismaJsonValue,
               },
             })
 
@@ -74,10 +77,12 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
             await tx.auditLog.create({
               data: {
                 ...context,
-                action: action.UPDATA,
-                entity: model,
-                oldData: oldData as PrismaJsonValue,
-                newData: newData as PrismaJsonValue,
+                type: auditLogType.UPDATA,
+                details: {
+                  entity: model,
+                  oldData,
+                  newData,
+                } as PrismaJsonValue,
               },
             })
 

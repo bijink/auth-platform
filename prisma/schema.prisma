@@ -50,19 +50,18 @@ model RefreshToken {
 }
 
 model AuditLog {
-  id        String   @default(uuid())
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  id            String   @default(uuid())
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp()
   // 
-  action    String // e.g., "CREATE", "UPDATE", "DELETE"
-  entity    String // e.g., "User", "Product"
-  oldData   Json?    @map("old_data")
-  newData   Json?    @map("new_data")
+  type          String // e.g., "CREATE", "UPDATE", "DELETE", "ERROR"
+  details       Json?
   // 
-  method    String? // api request method
-  url       String?
-  userId    Int?     @map("user_id") // ID of the user who performed the action
-  userEmail String?  @map("user_email") // Email of the user who performed the action
-  ipAddress String?  @map("ip_address")
+  requestUrl    String?  @map("request_url")
+  requestMethod String?  @map("request_method") // api request method
+  // 
+  userId        Int?     @map("user_id") // ID of the user who performed the action
+  userEmail     String?  @map("user_email") // Email of the user who performed the action
+  userIpAddress String?  @map("user_ip_address")
 
   @@id([id, createdAt])
   @@index([userId], map: "idx_audit_logs_user_id")
