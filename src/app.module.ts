@@ -6,13 +6,14 @@ import {
   RequestMethod,
 } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
-import { APP_GUARD } from '@nestjs/core'
+import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthInfrastructureModule } from './auth/auth-infrastructure.module'
 import { AuthModule } from './auth/auth.module'
+import { AllExceptionsFilter } from './common/filter'
 import { RequestContextMiddleware } from './common/middleware'
 import envValidation from './config/env.validation'
 import { AlsModule } from './infra/als/als.module'
@@ -53,6 +54,10 @@ import { UserModule } from './user/user.module'
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from 'generated/prisma/client'
 import { AlsService } from '../als/als.service'
-import { AuditLogPrismaClient, auditLogExtension } from './prisma.extension'
+import { AuditLogPrismaClient, auditLogExtension } from './extension'
 
 @Injectable()
 export class PrismaService extends PrismaClient {

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import * as argon from 'argon2'
-import { UserAlreadyExistsException } from 'src/custom-exceptions'
+import { UserAlreadyExistsException } from 'src/common/exception'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
 import { TokenService } from 'src/token/token.service'

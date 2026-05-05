@@ -1,23 +1,18 @@
 import { PrismaClient, type Prisma } from 'generated/prisma/client'
-import { AlsService } from '../als/als.service'
-import { getAuditContext } from './audit.helper'
+import { AlsService } from 'src/infra/als/als.service'
+import { getAuditContext } from '../util'
 
-type PrismaJsonValue =
-  | Prisma.InputJsonValue
-  | Prisma.NullableJsonNullValueInput
-  | undefined
-
-const action = {
+const auditLogType = {
   CREATE: 'CREATE',
   UPDATA: 'UPDATE',
-  DELETE: 'DELETE',
+  ERROR: 'ERROR',
 }
 
 export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
   return client.$extends({
     query: {
       $allModels: {
-        // create
+        // CREATE
         async create({ model, args, query }) {
           if (model === 'AuditLog') return query(args)
 
@@ -39,17 +34,21 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
             await tx.auditLog.create({
               data: {
                 ...context,
-                action: action.CREATE,
-                entity: model,
-                oldData: undefined,
-                newData: newData as PrismaJsonValue,
+                type: auditLogType.CREATE,
+                details: {
+                  entity: model,
+                  data: {
+                    old: null,
+                    new: newData,
+                  },
+                } as Prisma.InputJsonValue,
               },
             })
 
             return result
           })
         },
-        // update
+        // UPDATE
         async update({ model, args, query }) {
           if (model === 'AuditLog') return query(args)
 
@@ -74,10 +73,14 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
             await tx.auditLog.create({
               data: {
                 ...context,
-                action: action.UPDATA,
-                entity: model,
-                oldData: oldData as PrismaJsonValue,
-                newData: newData as PrismaJsonValue,
+                type: auditLogType.UPDATA,
+                details: {
+                  entity: model,
+                  data: {
+                    old: oldData,
+                    new: newData,
+                  },
+                } as Prisma.InputJsonValue,
               },
             })
 
