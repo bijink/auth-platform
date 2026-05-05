@@ -1,4 +1,4 @@
-import { AlsService } from '../als/als.service'
+import { AlsService } from 'src/infra/als/als.service'
 
 export function getAuditContext(als: AlsService) {
   const store = als.getStore()
