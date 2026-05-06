@@ -14,10 +14,10 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { Role } from 'generated/prisma/enums'
 import { Public, Roles, User } from 'src/auth/decorator'
-import { PaginationQueryDto } from 'src/common/pagination/dto'
 import {
   ChangeUserRoleDto,
   DeleteUserDto,
+  GetUsersQueryDto,
   ReactivateUserDto,
   UpdateUserDto,
 } from './dto'
@@ -31,8 +31,8 @@ export class UserController {
 
   @Roles(Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN)
   @Get()
-  getAllUsers(@Query() paginationQueryDto: PaginationQueryDto) {
-    return this.userService.findAllUsers(paginationQueryDto)
+  getAllUsers(@Query() getUsersQueryDto: GetUsersQueryDto) {
+    return this.userService.findAllUsers(getUsersQueryDto)
   }
 
   @Get('me')

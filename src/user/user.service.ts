@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common'
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
-import { PaginationQueryDto } from 'src/common/pagination/dto'
 import { PaginationProvider } from 'src/common/pagination/pagination.provider'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
@@ -16,6 +15,7 @@ import {
   ChangeUserRoleDto,
   CreateUserDto,
   DeleteUserDto,
+  GetUsersQueryDto,
   ReactivateUserDto,
   UpdateUserDto,
 } from './dto'
@@ -29,11 +29,17 @@ export class UserService {
     private readonly paginationProvider: PaginationProvider,
   ) {}
 
-  async findAllUsers(paginationQueryDto: PaginationQueryDto) {
+  async findAllUsers(getUsersQueryDto: GetUsersQueryDto) {
+    const orderByField = getUsersQueryDto.orderBy
+    const orderDirection = getUsersQueryDto.order === 'desc' ? 'desc' : 'asc'
+
     return await this.paginationProvider.paginateQuery(
       this.prisma.user,
-      paginationQueryDto,
-      { omit: { password: true } },
+      getUsersQueryDto,
+      {
+        omit: { password: true },
+        orderBy: { [orderByField!]: orderByField ? orderDirection : undefined },
+      },
     )
   }
 

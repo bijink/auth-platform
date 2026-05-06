@@ -5,10 +5,10 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsOptional()
   @IsPositive()
-  limit?: number = 10
+  limit?: number
 
   @Type(() => Number)
   @IsOptional()
   @IsPositive()
-  page?: number = 1
+  page?: number
 }
