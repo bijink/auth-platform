@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { Role } from 'generated/prisma/enums'
@@ -16,6 +17,7 @@ import { Public, Roles, User } from 'src/auth/decorator'
 import {
   ChangeUserRoleDto,
   DeleteUserDto,
+  GetUsersQueryDto,
   ReactivateUserDto,
   UpdateUserDto,
 } from './dto'
@@ -29,8 +31,8 @@ export class UserController {
 
   @Roles(Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN)
   @Get()
-  getAllUsers() {
-    return this.userService.findAllUsers()
+  getAllUsers(@Query() getUsersQueryDto: GetUsersQueryDto) {
+    return this.userService.findAllUsers(getUsersQueryDto)
   }
 
   @Get('me')

@@ -11,6 +11,7 @@ import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
 import { TokenService } from 'src/token/token.service'
 import { UserService } from './user.service'
+import { PaginationProvider } from 'src/common/pagination/pagination.provider'
 
 jest.mock('argon2')
 
@@ -40,6 +41,10 @@ describe('UserService', () => {
     generateToken: jest.fn(),
   }
 
+  const mockPaginationProvider = {
+    paginateQuery: jest.fn(),
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,6 +52,7 @@ describe('UserService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OtpService, useValue: mockOtpService },
         { provide: TokenService, useValue: mockTokenService },
+        { provide: PaginationProvider, useValue: mockPaginationProvider },
       ],
     }).compile()
 
@@ -62,13 +68,70 @@ describe('UserService', () => {
   })
 
   describe('findAllUsers', () => {
-    it('should return all users', async () => {
-      mockPrisma.user.findMany.mockResolvedValue([{ id: 1 }])
-      const result = await service.findAllUsers()
-      expect(result).toEqual([{ id: 1 }])
-      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
-        omit: { password: true },
+    it('should return paginated users without sorting', async () => {
+      mockPaginationProvider.paginateQuery.mockResolvedValue({
+        data: [{ id: 1 }],
+        meta: {
+          totalItems: 1,
+          totalPages: 1,
+          currentPage: 1,
+          itemsPerPage: 10,
+        },
       })
+      const result = await service.findAllUsers({})
+      expect(result).toEqual({
+        data: [{ id: 1 }],
+        meta: {
+          totalItems: 1,
+          totalPages: 1,
+          currentPage: 1,
+          itemsPerPage: 10,
+        },
+      })
+      expect(mockPaginationProvider.paginateQuery).toHaveBeenCalledWith(
+        mockPrisma.user,
+        {},
+        {
+          omit: { password: true },
+          orderBy: { undefined: undefined },
+        },
+      )
+    })
+
+    it('should return paginated users with sorting', async () => {
+      mockPaginationProvider.paginateQuery.mockResolvedValue({
+        data: [{ id: 1 }],
+        meta: {
+          totalItems: 1,
+          totalPages: 1,
+          currentPage: 1,
+          itemsPerPage: 10,
+        },
+      })
+      const query = {
+        page: 1,
+        limit: 10,
+        orderBy: 'firstName',
+        order: 'desc' as const,
+      }
+      const result = await service.findAllUsers(query)
+      expect(result).toEqual({
+        data: [{ id: 1 }],
+        meta: {
+          totalItems: 1,
+          totalPages: 1,
+          currentPage: 1,
+          itemsPerPage: 10,
+        },
+      })
+      expect(mockPaginationProvider.paginateQuery).toHaveBeenCalledWith(
+        mockPrisma.user,
+        query,
+        {
+          omit: { password: true },
+          orderBy: { firstName: 'desc' },
+        },
+      )
     })
   })
 

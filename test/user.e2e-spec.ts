@@ -5,6 +5,7 @@ import { AppModule } from 'src/app.module'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import request from 'supertest'
 import { App } from 'supertest/types'
+import { Paginated } from 'src/common/pagination/interfaces'
 
 describe('UserController (e2e)', () => {
   let app: INestApplication<App>
@@ -300,15 +301,37 @@ describe('UserController (e2e)', () => {
       await getTokens('user1@example.com')
       await getTokens('user2@example.com')
 
-      const res: { body: { length: string } } = await request(
+      const res: { body: Paginated<unknown> } = await request(
         app.getHttpServer(),
       )
         .get('/users')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
 
-      expect(Array.isArray(res.body)).toBe(true)
-      expect(res.body.length).toBeGreaterThanOrEqual(3)
+      expect(Array.isArray(res.body.data)).toBe(true)
+      expect(res.body.data.length).toBeGreaterThanOrEqual(3)
+      expect(res.body.meta).toBeDefined()
+    })
+
+    it('should return paginated and sorted users for SUPER_ADMIN', async () => {
+      const { accessToken } = await getTokens(
+        'admin-paginated@example.com',
+        Role.SUPER_ADMIN,
+      )
+      await getTokens('userA@example.com')
+      await getTokens('userB@example.com')
+
+      const res: { body: Paginated<unknown> } = await request(
+        app.getHttpServer(),
+      )
+        .get('/users?page=1&limit=2&orderBy=email&order=desc')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+
+      expect(Array.isArray(res.body.data)).toBe(true)
+      expect(res.body.data.length).toBeLessThanOrEqual(2)
+      expect(res.body.meta.currentPage).toBe(1)
+      expect(res.body.meta.itemsPerPage).toBe(2)
     })
 
     it('should return 403 for regular USER', async () => {
