@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common'
 import * as argon from 'argon2'
 import { Prisma } from 'generated/prisma/client'
+import { PaginationProvider } from 'src/common/pagination/pagination.provider'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
 import { OtpService } from 'src/otp/otp.service'
 import { TokenService } from 'src/token/token.service'
@@ -24,10 +25,19 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
+    private readonly paginate: PaginationProvider,
   ) {}
 
   async findAllUsers() {
-    return await this.prisma.user.findMany({ omit: { password: true } })
+    // return await this.prisma.user.findMany({ omit: { password: true } })
+    return await this.paginate.paginateQuery(
+      this.prisma.user,
+      {
+        limit: 10,
+        page: 1,
+      },
+      { omit: { password: true } },
+    )
   }
 
   async createUser(

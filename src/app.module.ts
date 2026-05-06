@@ -15,6 +15,7 @@ import { AuthInfrastructureModule } from './auth/auth-infrastructure.module'
 import { AuthModule } from './auth/auth.module'
 import { AllExceptionsFilter } from './common/filter'
 import { RequestContextMiddleware } from './common/middleware'
+import { PaginationModule } from './common/pagination/pagination.module'
 import envValidation from './config/env.validation'
 import { AlsModule } from './infra/als/als.module'
 import { PrismaModule } from './infra/prisma/prisma.module'
@@ -47,6 +48,7 @@ import { UserModule } from './user/user.module'
     }),
     ScheduleModule.forRoot(),
     AlsModule,
+    PaginationModule,
   ],
   controllers: [AppController],
   providers: [
