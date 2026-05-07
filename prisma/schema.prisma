@@ -66,5 +66,7 @@ model AuditLog {
   @@id([id, createdAt])
   @@index([userId], map: "idx_audit_logs_user_id")
   @@index([userEmail], map: "idx_audit_logs_user_email")
+  @@index([createdAt(sort: Desc)], map: "idx_audit_logs_created_at_desc")
+  @@index([type, createdAt(sort: Desc)], map: "idx_audit_logs_type_created_at")
   @@map("audit_logs")
 }

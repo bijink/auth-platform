@@ -11,6 +11,7 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { AuditLogModule } from './audit-log/audit-log.module'
 import { AuthInfrastructureModule } from './auth/auth-infrastructure.module'
 import { AuthModule } from './auth/auth.module'
 import { AllExceptionsFilter } from './common/filter'
@@ -47,6 +48,7 @@ import { UserModule } from './user/user.module'
     }),
     ScheduleModule.forRoot(),
     AlsModule,
+    AuditLogModule,
   ],
   controllers: [AppController],
   providers: [
