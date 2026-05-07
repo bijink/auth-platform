@@ -33,7 +33,7 @@ services:
     container_name: dev_db
     command: >
       postgres -c shared_preload_libraries=pg_cron
-               -c cron.database_name=auth_system
+               -c cron.database_name=${POSTGRES_DB}
     ports:
       - '5431:5432'
     env_file:

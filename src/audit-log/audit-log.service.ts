@@ -17,7 +17,7 @@ export class AuditLogService {
     // order query
     const orderByField = getAuditLogsQueryDto.orderBy
     const orderDirection = getAuditLogsQueryDto.order === 'asc' ? 'asc' : 'desc'
-    // data query
+    // date query
     const { monthStart, monthEnd } = this.getDateFallbacks()
     const fromDate = new Date(getAuditLogsQueryDto.from ?? monthStart)
     const toDate = new Date(getAuditLogsQueryDto.to ?? monthEnd)
