@@ -6,14 +6,9 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
+import { auditLogType } from 'src/audit-log/constant'
 import { REQUEST_USER_KEY } from 'src/auth/guard'
 import { PrismaService } from 'src/infra/prisma/prisma.service'
-
-const auditLogType = {
-  CREATE: 'CREATE',
-  UPDATA: 'UPDATE',
-  ERROR: 'ERROR',
-}
 
 @Catch() // Leaving this empty catches EVERYTHING
 export class AllExceptionsFilter implements ExceptionFilter {

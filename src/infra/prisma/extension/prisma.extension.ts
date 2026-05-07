@@ -1,12 +1,6 @@
 import { PrismaClient, type Prisma } from 'generated/prisma/client'
+import { auditLogType } from 'src/audit-log/constant'
 import { AlsService } from 'src/infra/als/als.service'
-import { getAuditContext } from '../util'
-
-const auditLogType = {
-  CREATE: 'CREATE',
-  UPDATA: 'UPDATE',
-  ERROR: 'ERROR',
-}
 
 export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
   return client.$extends({
@@ -93,3 +87,15 @@ export const auditLogExtension = (client: PrismaClient, als: AlsService) => {
 }
 
 export type AuditLogPrismaClient = ReturnType<typeof auditLogExtension>
+
+function getAuditContext(als: AlsService) {
+  const store = als.getStore()
+
+  return {
+    requestUrl: store?.get('url') as string | undefined,
+    requestMethod: store?.get('method') as string | undefined,
+    userId: store?.get('userId') as number | undefined,
+    userEmail: store?.get('userEmail') as string | undefined,
+    userIpAddress: store?.get('ip') as string | undefined,
+  }
+}
