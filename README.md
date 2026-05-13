@@ -4,7 +4,7 @@
 
 Production-ready authentication and authorization API for SaaS applications built with NestJS, Prisma, and PostgreSQL, featuring RBAC, JWT auth, audit logs, and secure user management.
 
-## Project requirment
+## Project requirement
 
 - Node ^22
 - Pnpm ^10
